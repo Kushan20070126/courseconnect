@@ -1,0 +1,24 @@
+  .text-purple {
+    color: var(--bs-purple) !important;
+    
+  }
+
+  .btn-outline-purple {
+    color: #6f42c1;
+    border-color: #6f42c1;
+    background-color: transparent;
+}
+
+.btn-outline-purple:hover {
+    color: #fff;
+    background-color: #6f42c1;
+    border-color: #6f42c1;
+}
+
+.btn-check:checked + .btn-outline-purple,
+.btn-outline-purple.active, 
+.btn-outline-purple:active {
+    color: #fff;
+    background-color: #6f42c1;
+    border-color: #6f42c1;
+}
