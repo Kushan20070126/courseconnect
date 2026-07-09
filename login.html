@@ -1,61 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Bootstrap 5</title>
-    <!-- Bootstrap 5 CSS CDN -->
-    <link href="https://jsdelivr.net" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In · CourseConnect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-light d-flex align-items-center justify-content-center vh-100">
+<body>
 
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-10 col-sm-8 col-md-6 col-lg-4">
-                <div class="card shadow border-0 rounded-3">
-                    <div class="card-body p-4 p-sm-5">
-                        <h3 class="card-title text-center mb-4 fw-bold">Sign In</h3>
-                        
-                        <form>
-                            <!-- Email Input -->
-                            <div class="form-floating mb-3">
-                                <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com" required>
-                                <label for="floatingInput">Email address</label>
-                            </div>
-                            
-                            <!-- Password Input -->
-                            <div class="form-floating mb-3">
-                                <input type="password" class="form-control" id="floatingPassword" placeholder="Password" required>
-                                <label for="floatingPassword">Password</label>
-                            </div>
+<div class="stage">
 
-                            <!-- Remember Me & Forgot Password -->
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="" id="rememberMe">
-                                    <label class="form-check-label text-secondary small" for="rememberMe">
-                                        Remember me
-                                    </label>
-                                </div>
-                                <a href="#" class="text-decoration-none small text-primary">Forgot password?</a>
-                            </div>
+  <!-- ================= Left brand panel ================= -->
+  <aside class="brand-panel">
+    <div class="ring-orbit"><span class="dot"></span></div>
 
-                            <!-- Submit Button -->
-                            <button class="btn btn-primary w-100 py-2 mb-3 fw-semibold" type="submit">Sign In</button>
-                            
-                            <!-- Register Link -->
-                            <div class="text-center">
-                                <p class="text-secondary small mb-0">Don't have an account? <a href="register.html" class="text-decoration-none fw-semibold">Register here</a></p>
-                            </div>
-                        </form>
-
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="brand-mark">
+      <span class="glyph">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 12v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </span>
+      CourseConnect
     </div>
 
-    <!-- Bootstrap 5 JS Bundle CDN -->
-    <script src="https://jsdelivr.net"></script>
+    <div class="brand-copy">
+      <h1>Welcome back — pick up right where you left off.</h1>
+      <p>Pick up right where you left off. Teach, learn, and grow on your own schedule.</p>
+
+      <div class="stat-row">
+        <div class="stat"><b>1,240+</b><span>Courses</span></div>
+        <div class="stat"><b>340+</b><span>Lecturers</span></div>
+        <div class="stat"><b>52k</b><span>Learners</span></div>
+      </div>
+    </div>
+
+    <div class="quote">
+      <strong>“The best classroom I've had didn't have walls.”</strong><br>
+      Feedback from a learner who finished 6 courses last year.
+    </div>
+  </aside>
+
+  <!-- ================= Right form panel ================= -->
+  <main class="form-panel">
+    <div class="form-card">
+      <div class="eyebrow">Account access</div>
+      <h2>Sign in to CourseConnect</h2>
+      <p class="sub">Enter your details to continue to your dashboard.</p>
+
+      <form id="loginForm" novalidate>
+
+        <!-- Email -->
+        <div class="field">
+          <label for="loginEmail">Email address <span class="req">*</span></label>
+          <input type="email" id="loginEmail" placeholder="name@example.com" required>
+        </div>
+
+        <!-- Password -->
+        <div class="field">
+          <label for="loginPass">Password <span class="req">*</span></label>
+          <div class="pass-wrap">
+            <input type="password" id="loginPass" placeholder="Enter your password" required>
+            <button type="button" class="pass-toggle" data-target="loginPass" aria-label="Show password">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Remember / forgot -->
+        <div class="form-util">
+          <label class="check">
+            <input type="checkbox" id="rememberMe"> Remember me
+          </label>
+          <a href="#" id="forgotLink">Forgot password?</a>
+        </div>
+
+        <button class="btn-submit" type="submit" id="submitBtn">
+          <span class="spinner"></span>
+          <span class="btn-label">Sign in</span>
+        </button>
+
+        <p class="signin-line">New to CourseConnect? <a href="register.html">Create an account</a></p>
+      </form>
+    </div>
+  </main>
+</div>
+
+<script src="animations.js"></script>
+<script>
+  // Password show/hide
+  document.querySelectorAll('.pass-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.dataset.target);
+      input.type = input.type === 'password' ? 'text' : 'password';
+    });
+  });
+
+  const form = document.getElementById('loginForm');
+  const submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!this.checkValidity()) {
+      this.reportValidity();
+      return;
+    }
+
+    const payload = {
+      email: document.getElementById('loginEmail').value,
+      password: document.getElementById('loginPass').value,
+      remember: document.getElementById('rememberMe').checked,
+    };
+
+    // Simulated submit state — replace with your actual fetch() call
+    submitBtn.classList.add('loading');
+    submitBtn.disabled = true;
+    console.log('Login payload:', payload);
+
+    setTimeout(() => {
+      submitBtn.classList.remove('loading');
+      submitBtn.disabled = false;
+      alert('Signed in! Check the console for the submitted data.');
+    }, 900);
+  });
+
+  document.getElementById('forgotLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    alert('Password reset link would be sent to your email.');
+  });
+</script>
 </body>
 </html>

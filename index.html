@@ -1,42 +1,197 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-      <link rel="stylesheet" href="lib/bootstrap.min.css">
-      <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CourseConnect · Learn without walls</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <div class="container-fluid">
-    <a class="navbar-brand text-purple fw-bold" href="#">CourseConnect</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-auto">
-        <li class="nav-item">
-          <a class="nav-link active p-4" aria-current="page" href="#">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link active p-4" aria-current="page" href="#">Courses</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link active p-4" aria-current="page" href="#">About</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link active p-4" aria-current="page" href="#">Contact</a>
-        </li>
-      </ul>
-      <form class="d-flex">
-        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-        <button class="btn btn-outline-purple" type="submit">Search</button>
-      </form>
-    </div>
+<!-- ===== Nav ===== -->
+<nav class="site-nav">
+  <div class="brand-mark">
+    <span class="glyph">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 12v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    </span>
+    CourseConnect
+  </div>
+
+  <div class="links">
+    <a href="#top">Home</a>
+    <a href="#features">Courses</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+  </div>
+
+  <div class="nav-actions">
+    <a class="btn-pill ghost" href="login.html" id="loginBtn">Login</a>
+    <a class="btn-pill solid" href="register.html" id="registerBtn">Register</a>
   </div>
 </nav>
-<script src="lib/bootstrap.min.js"></script>
+
+<!-- ===== Hero ===== -->
+<header class="hero" id="top">
+  <div class="hero-inner">
+    <span class="eyebrow">Learning without walls</span>
+    <h1>One account, two paths — learn and teach on your schedule.</h1>
+    <p>Join a community of learners and lecturers. Start a course today or publish your own, all from a single CourseConnect account.</p>
+    <div class="hero-cta">
+      <a class="btn-pill solid" href="register.html">Get started free</a>
+      <a class="btn-pill ghost" href="login.html">I already have an account</a>
+    </div>
+  </div>
+</header>
+
+<!-- ===== Features ===== -->
+<section class="section reveal" id="features">
+  <div class="sec-head">
+    <span class="eyebrow">Why CourseConnect</span>
+    <h2>Built for the way you actually learn</h2>
+    <p>Everything you need to grow a skill — or share one — in one focused place.</p>
+  </div>
+
+  <div class="cards">
+    <div class="card reveal d1">
+      <div class="ic">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6 12v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Learn at your pace</h3>
+      <p>Self-paced courses across tech, business, and the arts — pick up exactly where you left off.</p>
+    </div>
+
+    <div class="card reveal d2">
+      <div class="ic">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Teach what you know</h3>
+      <p>Lecturers get a clean publishing flow to turn expertise into structured, beautiful courses.</p>
+    </div>
+
+    <div class="card reveal d3">
+      <div class="ic">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 17l5-6 4 4 5-7 4 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Track real progress</h3>
+      <p>Goals, levels, and learning paths help you stay consistent and actually finish what you start.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== About ===== -->
+<section class="section about reveal" id="about">
+  <div class="about-grid">
+    <div class="about-copy">
+      <span class="eyebrow">About CourseConnect</span>
+      <h2>Learning without walls, built for everyone.</h2>
+      <p>CourseConnect is a focused learning platform where one account opens two paths. Learners dive into self-paced courses across technology, business, and the arts. Lecturers publish structured, beautiful courses and reach a global audience — all on their own schedule.</p>
+      <p>We exist to remove the friction between curiosity and capability, so progress is measured by consistency, not classrooms.</p>
+      <div class="about-stats">
+        <div class="stat"><b>1,240+</b><span>Courses</span></div>
+        <div class="stat"><b>340+</b><span>Lecturers</span></div>
+        <div class="stat"><b>52k</b><span>Learners</span></div>
+      </div>
+    </div>
+
+    <div class="about-values">
+      <div class="card">
+        <div class="ic">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6 12v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Accessible by design</h3>
+        <p>Clean, inclusive interfaces that work for every learner, on any device.</p>
+      </div>
+      <div class="card">
+        <div class="ic">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M3 17l5-6 4 4 5-7 4 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Progress that sticks</h3>
+        <p>Goals and learning paths keep you consistent and help you finish what you start.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Contact ===== -->
+<section class="section contact reveal" id="contact">
+  <div class="sec-head">
+    <span class="eyebrow">Get in touch</span>
+    <h2>We'd love to hear from you</h2>
+    <p>Questions, feedback, or partnership ideas — send us a message and we'll respond soon.</p>
+  </div>
+
+  <div class="contact-grid">
+    <form class="contact-form" id="contactForm" novalidate>
+      <div class="field">
+        <label for="contactName">Full name <span class="req">*</span></label>
+        <input type="text" id="contactName" placeholder="Jane Doe" required>
+      </div>
+      <div class="field">
+        <label for="contactEmail">Email address <span class="req">*</span></label>
+        <input type="email" id="contactEmail" placeholder="name@example.com" required>
+      </div>
+      <div class="field">
+        <label for="contactMsg">Message <span class="req">*</span></label>
+        <textarea id="contactMsg" placeholder="How can we help?" required></textarea>
+      </div>
+      <button class="btn-submit" type="submit" id="contactBtn">
+        <span class="spinner"></span>
+        <span class="btn-label">Send message</span>
+      </button>
+    </form>
+
+    <aside class="contact-info">
+      <div class="info-item">
+        <div class="ic">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="1.7"/><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <b>Email</b>
+          <span>hello@courseconnect.io</span>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="ic">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg>
+        </div>
+        <div>
+          <b>Office</b>
+          <span>120 Innovation Way, Colombo 03, Sri Lanka</span>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="ic">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <b>Support hours</b>
+          <span>Mon–Fri, 9:00 AM – 6:00 PM (GMT+5:30)</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer class="site-foot">
+  <div class="brand-mark" style="font-size:.92rem;">
+    <span class="glyph">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 12v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    </span>
+    CourseConnect
+  </div>
+  <div class="links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#contact">Contact</a>
+  </div>
+  <span>© 2026 CourseConnect. All rights reserved.</span>
+</footer>
+
+<script src="index.js"></script>
+<script src="animations.js"></script>
 </body>
 </html>

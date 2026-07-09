@@ -1,70 +1,319 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Bootstrap 5</title>
-    <!-- Bootstrap 5 CSS CDN -->
-    <link href="https://jsdelivr.net" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Account · CourseConnect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-light d-flex align-items-center justify-content-center vh-100">
+<body>
 
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-10 col-sm-8 col-md-6 col-lg-5">
-                <div class="card shadow border-0 rounded-3">
-                    <div class="card-body p-4 p-sm-5">
-                        <h3 class="card-title text-center mb-4 fw-bold">Create Account</h3>
-                        
-                        <form>
-                            <!-- Full Name Input -->
-                            <div class="form-floating mb-3">
-                                <input type="text" class="form-control" id="floatingName" placeholder="John Doe" required>
-                                <label for="floatingName">Full Name</label>
-                            </div>
+<div class="stage">
 
-                            <!-- Email Input -->
-                            <div class="form-floating mb-3">
-                                <input type="email" class="form-control" id="floatingEmail" placeholder="name@example.com" required>
-                                <label for="floatingEmail">Email address</label>
-                            </div>
-                            
-                            <!-- Password Input -->
-                            <div class="form-floating mb-3">
-                                <input type="password" class="form-control" id="floatingPass" placeholder="Password" required>
-                                <label for="floatingPass">Password</label>
-                            </div>
+  <!-- ================= Left brand panel ================= -->
+  <aside class="brand-panel">
+    <div class="ring-orbit"><span class="dot"></span></div>
 
-                            <!-- Confirm Password Input -->
-                            <div class="form-floating mb-3">
-                                <input type="password" class="form-control" id="floatingConfirmPass" placeholder="Confirm Password" required>
-                                <label for="floatingConfirmPass">Confirm Password</label>
-                            </div>
-
-                            <!-- Terms and Conditions Checkbox -->
-                            <div class="form-check mb-4">
-                                <input class="form-check-input" type="checkbox" value="" id="termsCheck" required>
-                                <label class="form-check-label text-secondary small" for="termsCheck">
-                                    I agree to the <a href="#" class="text-decoration-none">Terms & Conditions</a>
-                                </label>
-                            </div>
-
-                            <!-- Submit Button -->
-                            <button class="btn btn-success w-100 py-2 mb-3 fw-semibold" type="submit">Register</button>
-                            
-                            <!-- Login Link -->
-                            <div class="text-center">
-                                <p class="text-secondary small mb-0">Already have an account? <a href="login.html" class="text-decoration-none fw-semibold">Sign In</a></p>
-                            </div>
-                        </form>
-
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="brand-mark">
+      <span class="glyph">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 12v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </span>
+      CourseConnect
     </div>
 
-    <!-- Bootstrap 5 JS Bundle CDN -->
-    <script src="https://jsdelivr.net"></script>
+    <div class="brand-copy">
+      <h1>Education without boundaries — teach or learn on your schedule.</h1>
+      <p>One account, two paths. Sign up as a student to start a course today, or as a lecturer to publish one.</p>
+
+      <div class="stat-row">
+        <div class="stat"><b>1,240+</b><span>Courses</span></div>
+        <div class="stat"><b>340+</b><span>Lecturers</span></div>
+        <div class="stat"><b>52k</b><span>Learners</span></div>
+      </div>
+    </div>
+
+    <div class="quote">
+      <strong>“The best classroom I've had didn't have walls.”</strong><br>
+      Feedback from a learner who finished 6 courses last year.
+    </div>
+  </aside>
+
+  <!-- ================= Right form panel ================= -->
+  <main class="form-panel">
+    <div class="form-card">
+      <div class="eyebrow">Get started</div>
+      <h2>Create your account</h2>
+      <p class="sub">Takes less than a minute — pick how you'll use CourseConnect below.</p>
+
+      <form id="registerForm" novalidate>
+
+        <!-- Role segmented control -->
+        <div class="role-toggle" id="roleToggle">
+          <span class="glider"></span>
+          <button type="button" class="role-opt active" data-role="student">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6 12v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+            Student
+          </button>
+          <button type="button" class="role-opt" data-role="lecturer">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            Lecturer
+          </button>
+        </div>
+        <input type="hidden" id="floatingRole" value="student">
+
+        <!-- First / Last name -->
+        <div class="field-row">
+          <div class="field">
+            <label for="floatingFirstName">First name <span class="req">*</span></label>
+            <input type="text" id="floatingFirstName" placeholder="John" required>
+          </div>
+          <div class="field">
+            <label for="floatingLastName">Last name <span class="req">*</span></label>
+            <input type="text" id="floatingLastName" placeholder="Doe" required>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="field">
+          <label for="floatingEmail">Email address <span class="req">*</span></label>
+          <input type="email" id="floatingEmail" placeholder="name@example.com" required>
+        </div>
+
+        <!-- Age -->
+        <div class="field">
+          <label for="floatingAge">Age <span class="req">*</span></label>
+          <input type="number" id="floatingAge" placeholder="e.g. 24" min="13" max="120" required>
+        </div>
+
+        <!-- Password -->
+        <div class="field">
+          <label for="floatingPass">Password <span class="req">*</span></label>
+          <div class="pass-wrap">
+            <input type="password" id="floatingPass" placeholder="At least 8 characters" minlength="8" required>
+            <button type="button" class="pass-toggle" data-target="floatingPass" aria-label="Show password">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="field">
+          <label for="floatingConfirmPass">Confirm password <span class="req">*</span></label>
+          <div class="pass-wrap">
+            <input type="password" id="floatingConfirmPass" placeholder="Re-enter password" minlength="8" required>
+            <button type="button" class="pass-toggle" data-target="floatingConfirmPass" aria-label="Show password">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+            </button>
+          </div>
+          <div class="hint err" id="passHint" style="display:none;">Passwords don't match yet.</div>
+        </div>
+
+        <!-- Student section -->
+        <div class="role-section active" id="studentSection">
+          <div class="role-section-inner">
+            <div class="role-section-title">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+              Student details
+            </div>
+
+            <div class="field">
+              <label for="floatingEducationLevel">Education level</label>
+              <select id="floatingEducationLevel">
+                <option value="" selected disabled>Choose...</option>
+                <option value="high_school">High School</option>
+                <option value="undergraduate">Undergraduate</option>
+                <option value="graduate">Graduate</option>
+                <option value="professional">Working Professional</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="floatingInterest">Field of interest</label>
+              <input type="text" id="floatingInterest" placeholder="e.g. Web Development, Data Science">
+            </div>
+
+            <div class="field">
+              <label for="floatingGoal">Learning goal</label>
+              <select id="floatingGoal">
+                <option value="" selected disabled>Choose...</option>
+                <option value="career_change">Career Change</option>
+                <option value="skill_upgrade">Upgrade Current Skills</option>
+                <option value="hobby">Personal Interest / Hobby</option>
+                <option value="certification">Earn a Certification</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lecturer section -->
+        <div class="role-section" id="lecturerSection">
+          <div class="role-section-inner">
+            <div class="role-section-title">
+              <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/></svg>
+              Lecturer details
+            </div>
+
+            <div class="field">
+              <label for="floatingTitle">Title</label>
+              <select id="floatingTitle">
+                <option value="" selected disabled>Choose...</option>
+                <option value="mr">Mr.</option>
+                <option value="mrs">Mrs.</option>
+                <option value="ms">Ms.</option>
+                <option value="dr">Dr.</option>
+                <option value="prof">Prof.</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="floatingExperience">Work experience (years)</label>
+              <input type="number" id="floatingExperience" placeholder="e.g. 6" min="0" max="60">
+            </div>
+
+            <div class="field">
+              <label for="floatingArea">Relevant area of expertise</label>
+              <input type="text" id="floatingArea" placeholder="e.g. Machine Learning, Finance">
+            </div>
+
+            <div class="field">
+              <label for="floatingBio">Short bio / credentials</label>
+              <textarea id="floatingBio" placeholder="A couple of lines about your background"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Terms -->
+        <div class="terms">
+          <input type="checkbox" id="termsCheck" required>
+          <label for="termsCheck">I agree to the <a href="#">Terms &amp; Conditions</a> and <a href="#">Privacy Policy</a></label>
+        </div>
+
+        <button class="btn-submit" type="submit" id="submitBtn">
+          <span class="spinner"></span>
+          <span class="btn-label">Create account</span>
+        </button>
+
+        <p class="signin-line">Already have an account? <a href="login.html">Sign in</a></p>
+      </form>
+    </div>
+  </main>
+</div>
+
+<script src="animations.js"></script>
+<script>
+  // ---- Role segmented toggle ----
+  const roleToggle = document.getElementById('roleToggle');
+  const roleInput = document.getElementById('floatingRole');
+  const studentSection = document.getElementById('studentSection');
+  const lecturerSection = document.getElementById('lecturerSection');
+  const studentFields = ['floatingEducationLevel'];
+  const lecturerFields = ['floatingTitle', 'floatingExperience', 'floatingArea'];
+
+  function setRequired(ids, isRequired){
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      if(isRequired) el.setAttribute('required','required');
+      else el.removeAttribute('required');
+    });
+  }
+
+  function setRole(role){
+    roleInput.value = role;
+    roleToggle.classList.toggle('lecturer', role === 'lecturer');
+
+    roleToggle.querySelectorAll('.role-opt').forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.role === role);
+    });
+
+    studentSection.classList.toggle('active', role === 'student');
+    lecturerSection.classList.toggle('active', role === 'lecturer');
+
+    setRequired(studentFields, role === 'student');
+    setRequired(lecturerFields, role === 'lecturer');
+  }
+
+  roleToggle.querySelectorAll('.role-opt').forEach(btn=>{
+    btn.addEventListener('click', () => setRole(btn.dataset.role));
+  });
+
+  // ---- Password show/hide ----
+  document.querySelectorAll('.pass-toggle').forEach(btn=>{
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.dataset.target);
+      input.type = input.type === 'password' ? 'text' : 'password';
+    });
+  });
+
+  // ---- Live confirm-password check ----
+  const pass = document.getElementById('floatingPass');
+  const confirmPass = document.getElementById('floatingConfirmPass');
+  const passHint = document.getElementById('passHint');
+
+  function checkMatch(){
+    if(confirmPass.value && pass.value !== confirmPass.value){
+      passHint.style.display = 'block';
+      confirmPass.style.borderColor = 'var(--danger)';
+    } else {
+      passHint.style.display = 'none';
+      confirmPass.style.borderColor = '';
+    }
+  }
+  pass.addEventListener('input', checkMatch);
+  confirmPass.addEventListener('input', checkMatch);
+
+  // ---- Submit ----
+  const form = document.getElementById('registerForm');
+  const submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+
+    if(pass.value !== confirmPass.value){
+      checkMatch();
+      confirmPass.focus();
+      return;
+    }
+
+    if(!this.checkValidity()){
+      this.reportValidity();
+      return;
+    }
+
+    const role = roleInput.value;
+    const formData = {
+      firstName: document.getElementById('floatingFirstName').value,
+      lastName: document.getElementById('floatingLastName').value,
+      email: document.getElementById('floatingEmail').value,
+      age: document.getElementById('floatingAge').value,
+      role: role,
+    };
+
+    if(role === 'student'){
+      formData.educationLevel = document.getElementById('floatingEducationLevel').value;
+      formData.interest = document.getElementById('floatingInterest').value;
+      formData.goal = document.getElementById('floatingGoal').value;
+    } else {
+      formData.title = document.getElementById('floatingTitle').value;
+      formData.experience = document.getElementById('floatingExperience').value;
+      formData.area = document.getElementById('floatingArea').value;
+      formData.bio = document.getElementById('floatingBio').value;
+    }
+
+    // Simulated submit state — replace with your actual fetch() call
+    submitBtn.classList.add('loading');
+    submitBtn.disabled = true;
+    console.log('Registration payload:', formData);
+
+    setTimeout(() => {
+      submitBtn.classList.remove('loading');
+      submitBtn.disabled = false;
+      alert('Account created! Check the console for the submitted data.');
+    }, 900);
+  });
+</script>
 </body>
 </html>
