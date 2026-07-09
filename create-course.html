@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create a course · CourseConnect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===== Nav ===== -->
+<nav class="site-nav">
+  <div class="brand-mark">
+    <span class="glyph">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 12v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    </span>
+    CourseConnect
+  </div>
+
+  <div class="links">
+    <a href="index.html">Home</a>
+    <a href="courses.html">Courses</a>
+    <a href="profile.html?role=lecturer">My Learning</a>
+    <a href="index.html#about">About</a>
+    <a href="index.html#contact">Contact</a>
+  </div>
+
+  <div class="nav-actions">
+    <a class="btn-pill ghost" href="login.html">Login</a>
+    <a class="btn-pill solid" href="register.html">Register</a>
+  </div>
+</nav>
+
+<!-- ===== Create course ===== -->
+<main class="create-wrap">
+  <header class="create-head">
+    <a class="crumb" href="profile.html?role=lecturer">&larr; Back to dashboard</a>
+    <h1>Create a new course</h1>
+    <p class="sub">Share what you know. Fill in the details, build your curriculum, and publish.</p>
+  </header>
+
+  <!-- Stepper -->
+  <ol class="stepper" id="stepper">
+    <li class="step active" data-step="1"><span class="dot">1</span><span class="lbl">Basics</span></li>
+    <li class="step" data-step="2"><span class="dot">2</span><span class="lbl">Curriculum</span></li>
+    <li class="step" data-step="3"><span class="dot">3</span><span class="lbl">Pricing &amp; learn</span></li>
+    <li class="step" data-step="4"><span class="dot">4</span><span class="lbl">Review</span></li>
+  </ol>
+
+  <form id="createForm" novalidate>
+    <div class="form-error" id="formError" style="display:none;"></div>
+
+    <!-- STEP 1: BASICS -->
+    <section class="step-panel" data-step="1">
+      <div class="panel">
+        <h2>Course basics</h2>
+        <div class="field">
+          <label for="fTitle">Course title <span class="req">*</span></label>
+          <input type="text" id="fTitle" placeholder="e.g. Full-Stack Web Development with Python" required>
+          <div class="hint">Clear, specific titles perform best.</div>
+        </div>
+        <div class="field">
+          <label for="fSummary">Subtitle / summary <span class="req">*</span></label>
+          <textarea id="fSummary" placeholder="A one-line description of what students will achieve." required></textarea>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="fCategory">Category <span class="req">*</span></label>
+            <select id="fCategory" required>
+              <option value="" selected disabled>Choose…</option>
+              <option value="Development">Development</option>
+              <option value="Design">Design</option>
+              <option value="Business">Business</option>
+              <option value="Data Science">Data Science</option>
+              <option value="Marketing">Marketing</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fLevel">Level <span class="req">*</span></label>
+            <select id="fLevel" required>
+              <option value="" selected disabled>Choose…</option>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fLang">Primary language</label>
+          <input type="text" id="fLang" value="English">
+        </div>
+        <div class="field">
+          <label>Thumbnail color</label>
+          <div class="swatches" id="swatches">
+            <button type="button" class="swatch active" data-grad="#4F46E5,#2E1F8F" style="background:linear-gradient(135deg,#4F46E5,#2E1F8F)"></button>
+            <button type="button" class="swatch" data-grad="#0EA5A0,#0B7C78" style="background:linear-gradient(135deg,#0EA5A0,#0B7C78)"></button>
+            <button type="button" class="swatch" data-grad="#F2A93B,#C77E1B" style="background:linear-gradient(135deg,#F2A93B,#C77E1B)"></button>
+            <button type="button" class="swatch" data-grad="#E5484D,#A83034" style="background:linear-gradient(135deg,#E5484D,#A83034)"></button>
+            <button type="button" class="swatch" data-grad="#6A5CF0,#2E1F8F" style="background:linear-gradient(135deg,#6A5CF0,#2E1F8F)"></button>
+            <button type="button" class="swatch" data-grad="#0EA5A0,#4F46E5" style="background:linear-gradient(135deg,#0EA5A0,#4F46E5)"></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 2: CURRICULUM -->
+    <section class="step-panel" data-step="2" style="display:none;">
+      <div class="panel">
+        <div class="content-head">
+          <h2>Build your curriculum</h2>
+          <span class="content-meta">Group lessons into sections</span>
+        </div>
+        <div id="currBuilder"></div>
+        <button type="button" class="btn-outline add-row" id="addSection">+ Add section</button>
+      </div>
+    </section>
+
+    <!-- STEP 3: PRICING & LEARN -->
+    <section class="step-panel" data-step="3" style="display:none;">
+      <div class="panel">
+        <h2>Pricing</h2>
+        <div class="seg" id="priceSeg">
+          <button type="button" class="seg-opt active" data-type="free">Free</button>
+          <button type="button" class="seg-opt" data-type="paid">Paid</button>
+        </div>
+        <div class="field" id="priceField" style="display:none; margin-top:16px;">
+          <label for="fPrice">Price (USD)</label>
+          <input type="number" id="fPrice" min="0" placeholder="49">
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="content-head">
+          <h2>What students will learn</h2>
+          <span class="content-meta">Add 3–6 outcomes</span>
+        </div>
+        <div id="learnBuilder"></div>
+        <button type="button" class="btn-outline add-row" id="addLearn">+ Add outcome</button>
+      </div>
+
+      <div class="panel">
+        <h2>Requirements</h2>
+        <div id="reqBuilder"></div>
+        <button type="button" class="btn-outline add-row" id="addReq">+ Add requirement</button>
+      </div>
+    </section>
+
+    <!-- STEP 4: REVIEW -->
+    <section class="step-panel" data-step="4" style="display:none;">
+      <div class="panel">
+        <h2>Review &amp; publish</h2>
+        <div id="reviewBox"></div>
+      </div>
+    </section>
+
+    <!-- Footer nav -->
+    <div class="create-nav">
+      <button type="button" class="btn-pill ghost" id="btnBack" style="visibility:hidden;">Back</button>
+      <button type="button" class="btn-pill solid" id="btnNext">Continue</button>
+      <button type="submit" class="btn-submit create-publish" id="btnPublish" style="display:none; max-width:200px;">
+        <span class="spinner"></span><span class="btn-label">Publish course</span>
+      </button>
+    </div>
+  </form>
+</main>
+
+<!-- ===== Footer ===== -->
+<footer class="site-foot">
+  <div class="brand-mark" style="font-size:.92rem;">
+    <span class="glyph">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 12v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    </span>
+    CourseConnect
+  </div>
+  <div class="links">
+    <a href="index.html">Privacy</a>
+    <a href="index.html">Terms</a>
+    <a href="index.html#contact">Contact</a>
+  </div>
+  <span>© 2026 CourseConnect. All rights reserved.</span>
+</footer>
+
+<script src="data.js"></script>
+<script src="store.js"></script>
+<script src="create-course.js"></script>
+</body>
+</html>

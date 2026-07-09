@@ -47,5 +47,15 @@ var COURSES = [
   { id:12, title:'Accessible Front-End Engineering', instructor:'Marcus Lee', category:'Development', level:'Beginner', duration:'8h', rating:4.5, price:0, lessons:23, students:2900, bestseller:false, grad:['#0EA5A0','#2E1F8F'],
     summary:'Engineer interfaces everyone can use, meeting WCAG with semantic, robust markup.',
     learn:['Apply WCAG principles','Build with semantic HTML','Manage focus & ARIA','Test with assistive tech'],
-    curriculum:['Why accessibility','Semantics & ARIA','Keyboard & focus','Color & contrast','Testing tools'] }
+    curriculum:['Why accessibility','Semantics & ARIA','Keyboard & focus','Color & contrast','Testing tools'] },
+
+  // Courses published by the demo lecturer (Dr. Anika Perera)
+  { id:21, title:'Intro to Python for Everyone', instructor:'Dr. Anika Perera', category:'Development', level:'Beginner', duration:'10h', rating:4.7, price:0, lessons:30, students:3120, bestseller:true, grad:['#4F46E5','#2E1F8F'],
+    summary:'A friendly, project-based introduction to Python programming for total beginners.',
+    learn:['Write and run Python scripts','Work with data types & functions','Read and write files','Build a small real-world project'],
+    curriculum:['Setting up Python','Variables & types','Control flow','Functions','Working with data','A first project'] },
+  { id:22, title:'Containerization with Docker', instructor:'Dr. Anika Perera', category:'Development', level:'Intermediate', duration:'8h', rating:4.8, price:39, lessons:24, students:1480, bestseller:false, grad:['#0EA5A0','#0B7C78'],
+    summary:'Package, ship, and run applications reliably with Docker and container workflows.',
+    learn:['Build Docker images','Run and link containers','Use Docker Compose','Push images to a registry'],
+    curriculum:['What is Docker','Images & containers','Dockerfile basics','Volumes & networks','Docker Compose','Publishing'] }
 ];

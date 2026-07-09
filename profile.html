@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Course · CourseConnect</title>
+<title>My Learning · CourseConnect</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
   <div class="links">
     <a href="index.html">Home</a>
     <a href="courses.html">Courses</a>
-    <a href="profile.html">My Learning</a>
+    <a href="profile.html" class="active">My Learning</a>
     <a href="index.html#about">About</a>
     <a href="index.html#contact">Contact</a>
   </div>
@@ -34,10 +34,7 @@
   </div>
 </nav>
 
-<!-- ===== Detail ===== -->
-<main class="detail-wrap" id="detailRoot">
-  <!-- Rendered by course.js -->
-</main>
+<main id="profileRoot"><!-- rendered by profile.js --></main>
 
 <!-- ===== Footer ===== -->
 <footer class="site-foot">
@@ -57,6 +54,6 @@
 
 <script src="data.js"></script>
 <script src="store.js"></script>
-<script src="course.js"></script>
+<script src="profile.js"></script>
 </body>
 </html>

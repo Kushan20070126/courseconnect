@@ -1,4 +1,5 @@
-// COURSES is provided by data.js
+// COURSES comes from data.js; CourseStore merges it with created courses.
+var COURSES = window.CourseStore.getAll();
 
 var grid = document.getElementById('courseGrid');
 var countEl = document.getElementById('coursesCount');
