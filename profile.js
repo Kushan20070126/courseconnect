@@ -42,6 +42,8 @@ function catIcon(cat){
 }
 function fmt(n){ return n.toLocaleString('en-US'); }
 function playSVG(){ return '<svg viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7L8 5Z" fill="currentColor"/></svg>'; }
+function escapeHtml(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
+function escAttr(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
 
 function state(){
   return currentRole === 'lecturer'
@@ -54,16 +56,16 @@ function enrolledCard(e){
   if(!c) return '';
   var pct = e.progress;
   var btn = pct === 0 ? 'Start' : (pct === 100 ? 'Review' : 'Resume');
-  var lastLine = e.last ? ('Last: ' + e.last) : 'Not started yet';
+  var lastLine = e.last ? ('Last: ' + escapeHtml(e.last)) : 'Not started yet';
   return ''
     + '<article class="pl-card reveal">'
-    +   '<a class="pl-thumb" href="course.html?id=' + c.id + '" style="background:linear-gradient(135deg,' + c.grad[0] + ',' + c.grad[1] + ')">'
+    +   '<a class="pl-thumb" href="course.html?id=' + c.id + '" style="background:linear-gradient(135deg,' + escAttr(c.grad[0]) + ',' + escAttr(c.grad[1]) + ')">'
     +     '<svg class="ct-ic" viewBox="0 0 24 24" fill="none">' + catIcon(c.category) + '</svg>'
     +     (pct > 0 && pct < 100 ? '<span class="pl-resume">' + playSVG() + '</span>' : '')
     +   '</a>'
     +   '<div class="pl-body">'
-    +     '<span class="pl-cat">' + c.category + '</span>'
-    +     '<h3 class="pl-title"><a href="course.html?id=' + c.id + '">' + c.title + '</a></h3>'
+    +     '<span class="pl-cat">' + escapeHtml(c.category) + '</span>'
+    +     '<h3 class="pl-title"><a href="course.html?id=' + c.id + '">' + escapeHtml(c.title) + '</a></h3>'
     +     '<div class="pl-progress"><span class="track"><span class="fill" style="width:' + pct + '%"></span></span><span class="pct">' + pct + '%</span></div>'
     +     '<p class="pl-last">' + lastLine + '</p>'
     +     '<a class="btn-mini" href="course.html?id=' + c.id + '">' + btn + '</a>'
@@ -76,12 +78,12 @@ function teachingCard(tid){
   if(!c) return '';
   return ''
     + '<article class="pl-card reveal">'
-    +   '<a class="pl-thumb" href="course.html?id=' + c.id + '" style="background:linear-gradient(135deg,' + c.grad[0] + ',' + c.grad[1] + ')">'
+    +   '<a class="pl-thumb" href="course.html?id=' + c.id + '" style="background:linear-gradient(135deg,' + escAttr(c.grad[0]) + ',' + escAttr(c.grad[1]) + ')">'
     +     '<svg class="ct-ic" viewBox="0 0 24 24" fill="none">' + catIcon(c.category) + '</svg>'
     +   '</a>'
     +   '<div class="pl-body">'
     +     '<span class="pl-cat">You teach</span>'
-    +     '<h3 class="pl-title"><a href="course.html?id=' + c.id + '">' + c.title + '</a></h3>'
+    +     '<h3 class="pl-title"><a href="course.html?id=' + c.id + '">' + escapeHtml(c.title) + '</a></h3>'
     +     '<div class="pl-stats"><span>' + fmt(c.students) + ' students</span><span>★ ' + c.rating.toFixed(1) + '</span><span>' + c.lessons + ' lessons</span></div>'
     +     '<div class="pl-actions">'
     +       '<a class="btn-mini" href="course.html?id=' + c.id + '">View course</a>'
@@ -97,13 +99,13 @@ function wishCard(id){
   var price = c.price === 0 ? 'Free' : '$' + c.price;
   return ''
     + '<article class="pl-card reveal">'
-    +   '<a class="pl-thumb" href="course.html?id=' + c.id + '" style="background:linear-gradient(135deg,' + c.grad[0] + ',' + c.grad[1] + ')">'
+    +   '<a class="pl-thumb" href="course.html?id=' + c.id + '" style="background:linear-gradient(135deg,' + escAttr(c.grad[0]) + ',' + escAttr(c.grad[1]) + ')">'
     +     '<svg class="ct-ic" viewBox="0 0 24 24" fill="none">' + catIcon(c.category) + '</svg>'
     +   '</a>'
     +   '<div class="pl-body">'
-    +     '<span class="pl-cat">' + c.category + '</span>'
-    +     '<h3 class="pl-title"><a href="course.html?id=' + c.id + '">' + c.title + '</a></h3>'
-    +     '<p class="pl-last">by ' + c.instructor + '</p>'
+    +     '<span class="pl-cat">' + escapeHtml(c.category) + '</span>'
+    +     '<h3 class="pl-title"><a href="course.html?id=' + c.id + '">' + escapeHtml(c.title) + '</a></h3>'
+    +     '<p class="pl-last">by ' + escapeHtml(c.instructor) + '</p>'
     +     '<div class="pl-actions">'
     +       '<a class="btn-mini" href="course.html?id=' + c.id + '">View</a>'
     +       '<span class="pl-price">' + price + '</span>'
@@ -118,7 +120,7 @@ function certCard(cert){
   return ''
     + '<div class="cert-card reveal">'
     +   '<div class="cert-badge"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="5" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 13l-1.5 8 5-3 5 3-1.5-8" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>'
-    +   '<div class="cert-body"><b>' + c.title + '</b><p>Completed ' + cert.date + ' · CourseConnect</p></div>'
+    +   '<div class="cert-body"><b>' + escapeHtml(c.title) + '</b><p>Completed ' + escapeHtml(cert.date) + ' · CourseConnect</p></div>'
     +   '<button class="btn-outline sm" type="button" data-act="Download">Download</button>'
     + '</div>';
 }
@@ -126,9 +128,9 @@ function certCard(cert){
 function settingsForm(u){
   return ''
     + '<form class="settings-form" id="settingsForm">'
-    +   '<div class="field"><label for="setName">Full name</label><input type="text" id="setName" value="' + u.name + '"></div>'
-    +   '<div class="field"><label for="setEmail">Email</label><input type="email" id="setEmail" value="' + u.email + '"></div>'
-    +   '<div class="field"><label for="setHeadline">Headline</label><input type="text" id="setHeadline" value="' + u.headline + '"></div>'
+    +   '<div class="field"><label for="setName">Full name</label><input type="text" id="setName" value="' + escAttr(u.name) + '"></div>'
+    +   '<div class="field"><label for="setEmail">Email</label><input type="email" id="setEmail" value="' + escAttr(u.email) + '"></div>'
+    +   '<div class="field"><label for="setHeadline">Headline</label><input type="text" id="setHeadline" value="' + escAttr(u.headline) + '"></div>'
     +   (currentRole === 'lecturer'
         ? '<div class="field"><label for="setTitle">Title shown on courses</label><input type="text" id="setTitle" value="Dr."></div>'
         : '')
@@ -146,7 +148,18 @@ function render(){
   var s = state();
   var u = s.user;
   var enrolledCount = s.enrolled.length;
-  var hours = s.enrolled.reduce(function(acc, e){ var c = courseById(e.id); return acc + (c ? Math.round(parseInt(c.duration) * e.progress / 100) : 0); }, 0);
+  var hours = s.enrolled.reduce(function(acc, e){
+    var c = courseById(e.id);
+    if (!c) return acc;
+    // Parse duration like "14h", "9h 30m", "45m"
+    var totalHours = 0;
+    var hMatch = c.duration.match(/(\d+)h/);
+    var mMatch = c.duration.match(/(\d+)m/);
+    if (hMatch) totalHours += parseInt(hMatch[1], 10);
+    if (mMatch) totalHours += parseInt(mMatch[1], 10) / 60;
+    return acc + (totalHours * e.progress / 100);
+  }, 0);
+  hours = Math.round(hours);
 
   // Build tabs based on role
   var tabs = [{ id:'learning', label:'My learning' }];
@@ -168,11 +181,11 @@ function render(){
   // ===== Header =====
   + '<section class="profile-hero">'
   +   '<div class="profile-hero-inner">'
-  +     '<div class="ph-avatar">' + u.initials + '</div>'
+  +     '<div class="ph-avatar">' + escapeHtml(u.initials) + '</div>'
   +     '<div class="ph-info">'
-  +       '<div class="ph-top"><h1>' + u.name + '</h1><span class="ph-role">' + u.role + '</span></div>'
-  +       '<p class="ph-head">' + u.headline + '</p>'
-  +       '<p class="ph-mail">' + u.email + '</p>'
+  +       '<div class="ph-top"><h1>' + escapeHtml(u.name) + '</h1><span class="ph-role">' + escapeHtml(u.role) + '</span></div>'
+  +       '<p class="ph-head">' + escapeHtml(u.headline) + '</p>'
+  +       '<p class="ph-mail">' + escapeHtml(u.email) + '</p>'
   +     '</div>'
   +     '<div class="ph-controls">'
   +       '<div class="role-switch" id="roleSwitch">'

@@ -1167,8 +1167,11 @@ a{ color:var(--violet); }
   .learn-list{ grid-template-columns:1fr; }
   .rv-summary{ gap:18px; }
   .pl-grid{ grid-template-columns:1fr; }
-  .site-nav{ padding:14px 18px; }
-  .site-nav .links{ display:none; }
+  .site-nav{ padding:14px 18px; flex-wrap:wrap; gap:12px; }
+  .site-nav .links{ display:flex; flex-wrap:wrap; width:100%; order:3; justify-content:center; gap:12px; }
+  .site-nav .links a{ font-size:.88rem; }
+  .site-nav .brand-mark{ flex:1; min-width:150px; }
+  .site-nav .nav-actions{ flex:0 0 auto; }
   .rev-grid{ flex-direction:column; }
   .rev-thumb{ width:100%; height:120px; }
 }

@@ -27,6 +27,7 @@ function checkSVG(){
 }
 function fmt(n){ return n.toLocaleString('en-US'); }
 function escAttr(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
+function escapeHtml(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
 function initials(name){
   return name.replace(/^(Dr\.|Prof\.|Mr\.|Mrs\.|Ms\.)\s*/,'').split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
 }
@@ -75,26 +76,26 @@ function render(c){
     var lessonsHTML = s.lessons.map(function (l) {
       return '<div class="acc-lesson" data-video="' + escAttr(l.video || '') + '" data-desc="' + escAttr(l.desc || '') + '">'
         + '<span class="play">' + playSVG() + '</span>'
-        + '<span>' + l.title + '</span>'
+        + '<span>' + escapeHtml(l.title) + '</span>'
         + '<span class="dur">' + l.mins + ' min</span></div>';
     }).join('');
     return ''
       + '<div class="acc-section' + (si === 0 ? ' open' : '') + '">'
-      +   '<div class="acc-head"><span class="t">' + s.title + '</span><span class="meta">' + s.lessons.length + ' lessons</span></div>'
+      +   '<div class="acc-head"><span class="t">' + escapeHtml(s.title) + '</span><span class="meta">' + s.lessons.length + ' lessons</span></div>'
       +   '<div class="acc-body">' + lessonsHTML + '</div>'
       + '</div>';
   }).join('');
 
   // Sample reviews
   var reviews = [
-    { name:'Leslie A.', r:5, t:'“' + c.title + ' was exactly what I needed. Clear, practical, and I finished feeling confident.”' },
-    { name:'Mohamed K.', r:4, t:'“Great structure and the projects really helped it click. Would love even more advanced examples.”' },
-    { name:'Priya S.', r:5, t:'“' + c.instructor + ' explains things beautifully. Worth every minute — highly recommended.”' }
+    { name:'Leslie A.', r:5, t:'"' + escapeHtml(c.title) + ' was exactly what I needed. Clear, practical, and I finished feeling confident."' },
+    { name:'Mohamed K.', r:4, t:'"Great structure and the projects really helped it click. Would love even more advanced examples."' },
+    { name:'Priya S.', r:5, t:'"' + escapeHtml(c.instructor) + ' explains things beautifully. Worth every minute — highly recommended."' }
   ];
   var reviewsHTML = reviews.map(function (rv) {
     return '<div class="rv-item"><div class="rv-ava">' + initials(rv.name) + '</div>'
-      + '<div class="rv-body"><div class="rv-top"><span class="rv-name">' + rv.name + '</span><span class="rv-stars">' + starSVG() + ' ' + rv.r + '.0</span></div>'
-      + '<p>' + rv.t + '</p></div></div>';
+      + '<div class="rv-body"><div class="rv-top"><span class="rv-name">' + escapeHtml(rv.name) + '</span><span class="rv-stars">' + starSVG() + ' ' + rv.r + '.0</span></div>'
+      + '<p>' + escapeHtml(rv.t) + '</p></div></div>';
   }).join('');
 
   var includes = [
@@ -117,21 +118,21 @@ function render(c){
 
   root.innerHTML = ''
   // ===== HERO =====
-  + '<section class="detail-hero" style="background:linear-gradient(135deg,' + c.grad[0] + ',' + c.grad[1] + ');">'
+  + '<section class="detail-hero" style="background:linear-gradient(135deg,' + escAttr(c.grad[0]) + ',' + escAttr(c.grad[1]) + ');">'
   +   '<div class="detail-hero-inner">'
   +     '<a class="crumb" href="courses.html">&larr; All courses</a>'
-  +     '<span class="badge">' + c.category + '</span>'
-  +     '<h1>' + c.title + '</h1>'
-  +     '<p class="lede">' + c.summary + '</p>'
+  +     '<span class="badge">' + escapeHtml(c.category) + '</span>'
+  +     '<h1>' + escapeHtml(c.title) + '</h1>'
+  +     '<p class="lede">' + escapeHtml(c.summary) + '</p>'
   +     '<div class="detail-rating">'
   +       '<b>' + c.rating.toFixed(1) + '</b>' + starSVG()
   +       '<span class="rcount">(' + fmt(c.students) + ' ratings)</span>'
   +       '<span class="rcount">· ' + fmt(c.students) + ' students</span>'
   +     '</div>'
   +     '<div class="detail-byline">'
-  +       '<span>Created by <b>' + c.instructor + '</b></span>'
-  +       '<span>' + c.level + '</span>'
-  +       '<span>' + totalLessons + ' lessons · ' + c.duration + '</span>'
+  +       '<span>Created by <b>' + escapeHtml(c.instructor) + '</b></span>'
+  +       '<span>' + escapeHtml(c.level) + '</span>'
+  +       '<span>' + totalLessons + ' lessons · ' + escapeHtml(c.duration) + '</span>'
   +       '<span>English</span>'
   +       '<span>Last updated June 2026</span>'
   +     '</div>'
@@ -143,8 +144,8 @@ function render(c){
   +   '<div class="detail-main reveal">'
 
   +     '<div class="panel">'
-  +       '<h2>What you’ll learn</h2>'
-  +       '<ul class="learn-list">' + c.learn.map(function (x) { return '<li>' + checkSVG() + '<span>' + x + '</span></li>'; }).join('') + '</ul>'
+  +       '<h2>What you'll learn</h2>'
+  +       '<ul class="learn-list">' + c.learn.map(function (x) { return '<li>' + checkSVG() + '<span>' + escapeHtml(x) + '</span></li>'; }).join('') + '</ul>'
   +     '</div>'
 
   +     '<div class="panel">'
@@ -159,8 +160,8 @@ function render(c){
 
   +     '<div class="panel">'
   +       '<h2>Description</h2>'
-  +       '<p class="desc">' + c.summary + '</p>'
-  +       '<p class="desc">This course is built around hands-on practice. You’ll work through real examples, build a portfolio-ready project, and learn the patterns that professionals use — all at your own pace, with lifetime access.</p>'
+  +       '<p class="desc">' + escapeHtml(c.summary) + '</p>'
+  +       '<p class="desc">This course is built around hands-on practice. You'll work through real examples, build a portfolio-ready project, and learn the patterns that professionals use — all at your own pace, with lifetime access.</p>'
   +     '</div>'
 
   +     '<div class="panel">'
@@ -168,9 +169,9 @@ function render(c){
   +       '<div class="instructor">'
   +         '<div class="inst-ava">' + initials(c.instructor) + '</div>'
   +         '<div class="inst-body">'
-  +           '<b class="inst-name">' + c.instructor + '</b>'
-  +           '<span class="inst-title">' + c.category + ' Instructor · ' + c.level + '</span>'
-  +           '<p class="inst-bio">An experienced educator who has helped thousands of learners master ' + c.category.toLowerCase() + '. Known for clear explanations and project-based teaching.</p>'
+  +           '<b class="inst-name">' + escapeHtml(c.instructor) + '</b>'
+  +           '<span class="inst-title">' + escapeHtml(c.category) + ' Instructor · ' + escapeHtml(c.level) + '</span>'
+  +           '<p class="inst-bio">An experienced educator who has helped thousands of learners master ' + escapeHtml(c.category.toLowerCase()) + '. Known for clear explanations and project-based teaching.</p>'
   +         '</div>'
   +       '</div>'
   +     '</div>'
@@ -191,7 +192,7 @@ function render(c){
   // ===== SIDEBAR =====
   +   '<aside class="detail-side reveal d1">'
   +     '<div class="enroll-card">'
-  +       '<div class="video-preview" style="background:linear-gradient(135deg,' + c.grad[0] + ',' + c.grad[1] + ');">'
+  +       '<div class="video-preview" style="background:linear-gradient(135deg,' + escAttr(c.grad[0]) + ',' + escAttr(c.grad[1]) + ');">'
   +         '<span class="play-btn">' + playSVG() + '</span>'
   +         '<span class="vp-dur">Preview</span>'
   +       '</div>'
@@ -271,9 +272,13 @@ function wireInteractions(){
   function embedVideo(url){
     if (!url) return '<div class="lm-noVideo">No video attached to this lesson yet.</div>';
     var yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
-    if (yt) return '<iframe src="https://www.youtube.com/embed/' + yt[1] + '" frameborder="0" allowfullscreen></iframe>';
-    if (/^(blob:|data:video|https?:\/\/.*\.(mp4|webm|ogg))/.test(url)) return '<video src="' + url + '" controls></video>';
-    return '<div class="lm-noVideo">Video: <a href="' + url + '" target="_blank" rel="noopener">' + url + '</a></div>';
+    if (yt) return '<iframe src="https://www.youtube.com/embed/' + escAttr(yt[1]) + '" frameborder="0" allowfullscreen></iframe>';
+    if (/^(blob:|data:video|https?:\/\/.*\.(mp4|webm|ogg))/.test(url)) return '<video src="' + escAttr(url) + '" controls></video>';
+    // Validate URL scheme for fallback link
+    if (/^https?:\/\//.test(url)) {
+      return '<div class="lm-noVideo">Video: <a href="' + escAttr(url) + '" target="_blank" rel="noopener">' + escapeHtml(url) + '</a></div>';
+    }
+    return '<div class="lm-noVideo">Invalid video URL provided.</div>';
   }
   function openLesson(i){
     var item = flat[i]; if (!item) return;

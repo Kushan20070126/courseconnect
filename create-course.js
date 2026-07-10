@@ -216,7 +216,7 @@
     var duration = (h && m) ? (h + 'h ' + m + 'm') : (h ? h + 'h' : m + 'm');
     var price = priceType === 'free' ? 0 : (parseFloat(val('fPrice')) || 0);
     return {
-      id: Math.floor(Date.now() / 1000),
+      id: Date.now() + Math.floor(Math.random() * 1000),
       title: val('fTitle'),
       summary: val('fSummary'),
       instructor: CURRENT_LECTURER,
@@ -231,6 +231,7 @@
       bestseller: false,
       grad: selectedGrad.split(','),
       learn: readList('#learnBuilder'),
+      requirements: readList('#reqBuilder'),
       curriculum: secs.reduce(function (acc, s) { return acc.concat(s.lessons.map(function (l) { return l.title; })); }, []),
       sections: secs,
       created: true
@@ -277,12 +278,30 @@
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var err = validateStep(1) || validateStep(2) || validateStep(3);
-    if (err) { showError(err); step = (validateStep(1) ? (validateStep(2) ? 3 : 2) : 1); showPanel(step); return; }
+    if (err) {
+      showError(err);
+      // Find first failing step
+      if (validateStep(1)) {
+        step = 1;
+      } else if (validateStep(2)) {
+        step = 2;
+      } else if (validateStep(3)) {
+        step = 3;
+      }
+      showPanel(step);
+      return;
+    }
     var course = buildCourse();
-    window.CourseStore.add(course);
     btnPublish.classList.add('loading');
     btnPublish.disabled = true;
     showError('');
+    var success = window.CourseStore.add(course);
+    if (!success) {
+      btnPublish.classList.remove('loading');
+      btnPublish.disabled = false;
+      showError('Failed to save course. Your browser storage may be full. Please try removing some data and try again.');
+      return;
+    }
     setTimeout(function () {
       alert('Course published! It now appears in your catalog and dashboard.');
       window.location.href = 'course.html?id=' + course.id;

@@ -8,7 +8,12 @@
     catch (e) { return []; }
   }
   function save(list) {
-    try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) {}
+    try {
+      localStorage.setItem(KEY, JSON.stringify(list));
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   window.CourseStore = {
@@ -18,8 +23,15 @@
     },
     add: function (course) {
       var list = load();
-      list.push(course);
-      save(list);
+      // Check for duplicate ID
+      var existing = list.filter(function (c) { return c.id === course.id; })[0];
+      if (existing) {
+        // Replace existing course with same ID
+        list = list.map(function (c) { return c.id === course.id ? course : c; });
+      } else {
+        list.push(course);
+      }
+      return save(list);
     }
   };
 })();
