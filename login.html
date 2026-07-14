@@ -8,8 +8,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="session.css">
 </head>
 <body>
+
+<div id="cc-nav"></div>
 
 <div class="stage">
 
@@ -50,6 +53,20 @@
 
       <form id="loginForm" novalidate>
 
+        <!-- Account type segmented control -->
+        <div class="role-toggle" id="accountToggle">
+          <span class="glider"></span>
+          <button type="button" class="role-opt active" data-account="user">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6 12v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+            Student / Lecturer
+          </button>
+          <button type="button" class="role-opt" data-account="admin">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 2 3 6v6c0 5 3.8 8.4 9 10 5.2-1.6 9-5 9-10V6l-9-4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+            Admin
+          </button>
+        </div>
+        <input type="hidden" id="floatingAccount" value="user">
+
         <!-- Email -->
         <div class="field">
           <label for="loginEmail">Email address <span class="req">*</span></label>
@@ -75,6 +92,8 @@
           <a href="#" id="forgotLink">Forgot password?</a>
         </div>
 
+        <div class="hint err" id="loginErr" style="display:none;"></div>
+
         <button class="btn-submit" type="submit" id="submitBtn">
           <span class="spinner"></span>
           <span class="btn-label">Sign in</span>
@@ -86,8 +105,23 @@
   </main>
 </div>
 
+<script src="auth.js"></script>
 <script src="animations.js"></script>
 <script>
+  const accountToggle = document.getElementById('accountToggle');
+  const accountInput = document.getElementById('floatingAccount');
+
+  accountToggle.querySelectorAll('.role-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const acc = btn.dataset.account;
+      accountInput.value = acc;
+      accountToggle.classList.toggle('lecturer', acc === 'admin');
+      accountToggle.querySelectorAll('.role-opt').forEach(b => {
+        b.classList.toggle('active', b.dataset.account === acc);
+      });
+    });
+  });
+
   // Password show/hide
   document.querySelectorAll('.pass-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -98,30 +132,55 @@
 
   const form = document.getElementById('loginForm');
   const submitBtn = document.getElementById('submitBtn');
+  const loginErr = document.getElementById('loginErr');
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
+    loginErr.style.display = 'none';
+
     if (!this.checkValidity()) {
       this.reportValidity();
       return;
     }
 
-    const payload = {
-      email: document.getElementById('loginEmail').value,
-      password: document.getElementById('loginPass').value,
-      remember: document.getElementById('rememberMe').checked,
-    };
+    const account = accountInput.value;
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPass').value;
 
-    // Simulated submit state — replace with your actual fetch() call
+    const endpoint = account === 'admin' ? 'http://localhost:8080/req/admin/login' : 'http://localhost:8080/req/login';
+
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;
-    console.log('Login payload:', payload);
 
-    setTimeout(() => {
+    fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, remember: document.getElementById('rememberMe').checked })
+    })
+    .then(async response => {
+      if (!response.ok) {
+        let msg = 'Sign in failed (HTTP ' + response.status + ')';
+        try {
+          const err = await response.json();
+          if (err && err.message) msg = err.message;
+        } catch (_) {}
+        throw new Error(msg);
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Store the JWT + session info in localStorage, then redirect to the right profile.
+      CourseConnectAuth.store(data);
+      window.location.href = CourseConnectAuth.profileUrl(data.role);
+    })
+    .catch(error => {
+      loginErr.textContent = error.message || 'Unable to sign in.';
+      loginErr.style.display = 'block';
+    })
+    .finally(() => {
       submitBtn.classList.remove('loading');
       submitBtn.disabled = false;
-      alert('Signed in! Check the console for the submitted data.');
-    }, 900);
+    });
   });
 
   document.getElementById('forgotLink').addEventListener('click', (e) => {

@@ -202,6 +202,7 @@
   </main>
 </div>
 
+<script src="auth.js"></script>
 <script src="animations.js"></script>
 <script>
   // ---- Role segmented toggle ----
@@ -284,35 +285,72 @@
     }
 
     const role = roleInput.value;
+    const ageVal = document.getElementById('floatingAge').value;
+    const email = document.getElementById('floatingEmail').value.trim();
+
     const formData = {
-      firstName: document.getElementById('floatingFirstName').value,
-      lastName: document.getElementById('floatingLastName').value,
-      email: document.getElementById('floatingEmail').value,
-      age: document.getElementById('floatingAge').value,
       role: role,
+      firstName: document.getElementById('floatingFirstName').value.trim(),
+      lastName: document.getElementById('floatingLastName').value.trim(),
+      email: email,
+      age: ageVal ? parseInt(ageVal, 10) : null,
+      password: pass.value,
     };
 
     if(role === 'student'){
       formData.educationLevel = document.getElementById('floatingEducationLevel').value;
-      formData.interest = document.getElementById('floatingInterest').value;
+      formData.interest = document.getElementById('floatingInterest').value.trim();
       formData.goal = document.getElementById('floatingGoal').value;
     } else {
+      const expVal = document.getElementById('floatingExperience').value;
       formData.title = document.getElementById('floatingTitle').value;
-      formData.experience = document.getElementById('floatingExperience').value;
-      formData.area = document.getElementById('floatingArea').value;
-      formData.bio = document.getElementById('floatingBio').value;
+      formData.experience = expVal ? parseInt(expVal, 10) : null;
+      formData.area = document.getElementById('floatingArea').value.trim();
+      formData.bio = document.getElementById('floatingBio').value.trim();
     }
 
-    // Simulated submit state — replace with your actual fetch() call
-    submitBtn.classList.add('loading');
-    submitBtn.disabled = true;
-    console.log('Registration payload:', formData);
+  submitBtn.classList.add('loading');
+submitBtn.disabled = true;
 
-    setTimeout(() => {
-      submitBtn.classList.remove('loading');
-      submitBtn.disabled = false;
-      alert('Account created! Check the console for the submitted data.');
-    }, 900);
+fetch("http://localhost:8080/req/signup", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify(formData)
+})
+.then(async response => {
+    if (!response.ok) {
+        let msg = "Registration failed (HTTP " + response.status + ")";
+        try {
+            const err = await response.json();
+            if (err && (err.message || err.error)) msg = err.message || err.error;
+        } catch (_) { /* response had no JSON body */ }
+        throw new Error(msg);
+    }
+    return response.json();
+})
+.then(data => {
+    console.log("Saved user:", data);
+    // Persist the JWT and send the user straight to their own profile.
+    CourseConnectAuth.store(data);
+    window.location.href = CourseConnectAuth.profileUrl(data.role);
+})
+.catch(error => {
+    console.error(error);
+    submitBtn.classList.remove("loading");
+    submitBtn.disabled = false;
+    if (error instanceof TypeError) {
+        // Network / CORS failure ("Failed to fetch")
+        alert("Cannot reach the server. Make sure the auth service is running on http://localhost:8080 and try again.");
+    } else {
+        alert("Error: " + error.message);
+    }
+})
+.finally(() => {
+    submitBtn.classList.remove("loading");
+    submitBtn.disabled = false;
+});
   });
 </script>
 </body>
