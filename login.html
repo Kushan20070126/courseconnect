@@ -106,8 +106,14 @@
 </div>
 
 <script src="auth.js"></script>
+<script src="session.js"></script>
 <script src="animations.js"></script>
 <script>
+  // ---- Session: show navbar + skip auth form when already signed in ----
+  Session.init();
+  Session.renderNavbar('cc-nav');
+  Session.guardPublic();
+
   const accountToggle = document.getElementById('accountToggle');
   const accountInput = document.getElementById('floatingAccount');
 

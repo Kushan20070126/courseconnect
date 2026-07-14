@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="session.css">
 </head>
 <body>
 
@@ -183,6 +184,15 @@
   <span>© 2026 CourseConnect. All rights reserved.</span>
 </footer>
 
+<script src="auth.js"></script>
+<script src="session.js"></script>
+<script>
+  Session.init();
+  // Creating a course requires a signed-in account.
+  if (Session.protect()) {
+    Session.renderSiteNav();
+  }
+</script>
 <script src="data.js"></script>
 <script src="store.js"></script>
 <script src="create-course.js"></script>

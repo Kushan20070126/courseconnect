@@ -22,6 +22,18 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
+  function initials(name) {
+    if (!name) return '?';
+    var parts = String(name).trim().split(/\s+/);
+    return ((parts[0] || '')[0] || '?').toUpperCase() + ((parts[1] || '')[0] || '').toUpperCase();
+  }
+
+  /* Circular gradient avatar showing the user's initials. */
+  function avatarHtml(name, extraClass) {
+    return '<a class="cc-avatar ' + (extraClass || '') + '" href="profile.html" title="My profile">' +
+      escapeHtml(initials(name)) + '</a>';
+  }
+
   var Session = {
     token: null,
     role: null,
@@ -31,7 +43,6 @@
     /* Read + validate the stored JWT. Call once per page load. */
     init: function () {
       if (!Auth.isLoggedIn()) {
-        // Expired/invalid token lingering? Clear it.
         if (Auth.getToken()) Auth.logout();
         this.active = false;
         return false;
@@ -79,9 +90,8 @@
       Auth.logout();
     },
 
-    /* Render a consistent top navbar into the element with id `elId`.
-       Shows the user + role + logout when signed in, otherwise
-       Sign in / Sign up. Safe to call on every page. */
+    /* Renders the sticky top bar (#cc-nav) used by auth/app pages.
+       Shows the profile avatar + name + role + logout when signed in. */
     renderNavbar: function (elId) {
       var el = document.getElementById(elId);
       if (!el) return;
@@ -104,12 +114,38 @@
 
       var name = escapeHtml((this.user && (this.user.name || this.user.email)) || 'User');
       var role = escapeHtml(this.role || '');
+      var dash = this.role === 'admin'
+        ? '<a class="cc-btn" href="admin-dashboard.html">Dashboard</a>' : '';
       el.innerHTML = brand +
         '<div class="cc-nav-right">' +
+        avatarHtml((this.user && this.user.name) || (this.user && this.user.email) || 'User') +
         '<span class="cc-nav-user">' + name + '</span>' +
         '<span class="cc-badge">' + role + '</span>' +
+        dash +
         '<button class="cc-btn" id="ccLogout">Log out</button>' +
         '</div>';
+
+      var btn = document.getElementById('ccLogout');
+      if (btn) btn.addEventListener('click', function () { Session.logout(); });
+    },
+
+    /* Renders the session state into the marketing/course pages'
+       existing .site-nav .nav-actions area. Guests keep their
+       Login/Register buttons; signed-in users get a profile
+       avatar icon (+ Dashboard for admins) and a Log out button. */
+    renderSiteNav: function (slot) {
+      var el = (typeof slot === 'string') ? document.querySelector(slot) : slot;
+      if (!el) el = document.querySelector('.nav-actions');
+      if (!el) return;
+      if (!this.active) return; // leave guest Login/Register as-is
+
+      var name = (this.user && (this.user.name || this.user.email)) || 'User';
+      var dash = this.role === 'admin'
+        ? '<a class="btn-pill ghost" href="admin-dashboard.html">Dashboard</a>' : '';
+      el.innerHTML =
+        avatarHtml(name) +
+        dash +
+        '<button class="btn-pill ghost" id="ccLogout">Log out</button>';
 
       var btn = document.getElementById('ccLogout');
       if (btn) btn.addEventListener('click', function () { Session.logout(); });

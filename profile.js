@@ -6,7 +6,10 @@
 (function () {
   'use strict';
 
-  if (!CourseConnectAuth.requireAuth()) return;
+  // Build the session from the stored JWT and protect this page.
+  Session.init();
+  Session.renderNavbar('cc-nav');
+  if (!Session.protect()) return;
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -60,7 +63,7 @@
     showExtras(role);
   }
 
-  CourseConnectAuth.fetch('/req/me')
+  Session.api('/req/me')
     .then(function (res) {
       if (!res.ok) throw new Error('Failed to load profile');
       return res.json();
@@ -69,11 +72,11 @@
     .catch(function (err) {
       console.error(err);
       // Token invalid/expired — clear and send back to login.
-      CourseConnectAuth.logout();
+      Session.logout();
     });
 
   $('logoutBtn').addEventListener('click', function () {
-    CourseConnectAuth.logout();
+    Session.logout();
   });
 
   $('homeBtn').addEventListener('click', function () {

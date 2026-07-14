@@ -8,8 +8,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="session.css">
 </head>
 <body>
+
+<div id="cc-nav"></div>
 
 <div class="stage">
 
@@ -203,8 +206,13 @@
 </div>
 
 <script src="auth.js"></script>
+<script src="session.js"></script>
 <script src="animations.js"></script>
 <script>
+  // ---- Session: show navbar + skip registration when already signed in ----
+  Session.init();
+  Session.renderNavbar('cc-nav');
+  Session.guardPublic();
   // ---- Role segmented toggle ----
   const roleToggle = document.getElementById('roleToggle');
   const roleInput = document.getElementById('floatingRole');
