@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign In · CourseConnect</title>
+<title>Admin Sign In · CourseConnect</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -17,7 +17,7 @@
 <div class="stage">
 
   <!-- ================= Left brand panel ================= -->
-  <aside class="brand-panel">
+  <aside class="brand-panel admin-panel">
     <div class="ring-orbit"><span class="dot"></span></div>
 
     <div class="brand-mark">
@@ -28,8 +28,8 @@
     </div>
 
     <div class="brand-copy">
-      <h1>Welcome back — pick up right where you left off.</h1>
-      <p>Pick up right where you left off. Teach, learn, and grow on your own schedule.</p>
+      <h1>Admin console — oversee the platform.</h1>
+      <p>Manage users, courses, and platform activity from a single secure dashboard.</p>
 
       <div class="stat-row">
         <div class="stat"><b>1,240+</b><span>Courses</span></div>
@@ -47,16 +47,16 @@
   <!-- ================= Right form panel ================= -->
   <main class="form-panel">
     <div class="form-card">
-      <div class="eyebrow">Account access</div>
-      <h2>Sign in to CourseConnect</h2>
-      <p class="sub">Enter your details to continue to your dashboard.</p>
+      <div class="eyebrow">Admin access</div>
+      <h2>Sign in to the admin console</h2>
+      <p class="sub">This area is restricted to CourseConnect administrators.</p>
 
-      <form id="loginForm" novalidate>
+      <form id="adminLoginForm" novalidate>
 
         <!-- Email -->
         <div class="field">
-          <label for="loginEmail">Email address <span class="req">*</span></label>
-          <input type="email" id="loginEmail" placeholder="name@example.com" required>
+          <label for="loginEmail">Admin email <span class="req">*</span></label>
+          <input type="email" id="loginEmail" placeholder="admin@courseconnect.com" required>
         </div>
 
         <!-- Password -->
@@ -70,23 +70,14 @@
           </div>
         </div>
 
-        <!-- Remember / forgot -->
-        <div class="form-util">
-          <label class="check">
-            <input type="checkbox" id="rememberMe"> Remember me
-          </label>
-          <a href="#" id="forgotLink">Forgot password?</a>
-        </div>
-
         <div class="hint err" id="loginErr" style="display:none;"></div>
 
         <button class="btn-submit" type="submit" id="submitBtn">
           <span class="spinner"></span>
-          <span class="btn-label">Sign in</span>
+          <span class="btn-label">Sign in as admin</span>
         </button>
 
-        <p class="signin-line">New to CourseConnect? <a href="register.html">Create an account</a></p>
-        <p class="admin-line">Are you an admin? <a href="admin-login.html">Sign in to the admin console</a></p>
+        <p class="signin-line">Not an admin? <a href="login.html">Student / lecturer sign in</a></p>
       </form>
     </div>
   </main>
@@ -110,7 +101,7 @@
     });
   });
 
-  const form = document.getElementById('loginForm');
+  const form = document.getElementById('adminLoginForm');
   const submitBtn = document.getElementById('submitBtn');
   const loginErr = document.getElementById('loginErr');
 
@@ -126,19 +117,17 @@
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPass').value;
 
-    const endpoint = CourseConnectAuth.url('/req/login');
-
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;
 
-    fetch(endpoint, {
+    fetch(CourseConnectAuth.url('/req/admin/login'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, remember: document.getElementById('rememberMe').checked })
+      body: JSON.stringify({ email, password })
     })
     .then(async response => {
       if (!response.ok) {
-        let msg = 'Sign in failed (HTTP ' + response.status + ')';
+        let msg = 'Admin sign in failed (HTTP ' + response.status + ')';
         try {
           const err = await response.json();
           if (err && err.message) msg = err.message;
@@ -148,9 +137,8 @@
       return response.json();
     })
     .then(data => {
-      // Store the JWT + session info in localStorage, then redirect to the right profile.
       CourseConnectAuth.store(data);
-      window.location.href = CourseConnectAuth.profileUrl(data.role);
+      window.location.href = 'admin-dashboard.html';
     })
     .catch(error => {
       loginErr.textContent = error.message || 'Unable to sign in.';
@@ -160,11 +148,6 @@
       submitBtn.classList.remove('loading');
       submitBtn.disabled = false;
     });
-  });
-
-  document.getElementById('forgotLink').addEventListener('click', (e) => {
-    e.preventDefault();
-    alert('Password reset link would be sent to your email.');
   });
 </script>
 </body>

@@ -17,7 +17,21 @@
     admin: 'profile.html'
   };
 
-  var API_BASE = 'http://localhost:8080';
+  var DEFAULT_API_BASE = 'http://localhost:8080';
+
+  /* Resolve the backend base URL. Prefers BACKEND_API_GATEWAY_URL
+     from the runtime .env (loaded by env.js); falls back to the
+     direct auth-service address when the env file is unavailable. */
+  function resolveApiBase() {
+    var fromEnv = (global.__ENV && global.__ENV.BACKEND_API_GATEWAY_URL) || '';
+    return fromEnv || DEFAULT_API_BASE;
+  }
+
+  /* Join the base URL with a path, collapsing a duplicate slash
+     (e.g. ".../aut-svc/" + "/req/login" -> ".../aut-svc/req/login"). */
+  function buildUrl(path) {
+    return resolveApiBase().replace(/\/+$/, '') + path;
+  }
 
   function safeSet(key, value) {
     try { localStorage.setItem(key, value); } catch (e) {}
@@ -60,7 +74,28 @@
   }
 
   var CourseConnectAuth = {
-    apiBase: API_BASE,
+    // Resolved at access time so it picks up the env value even if
+    // env.js finishes loading after auth.js initialises.
+    get apiBase() { return resolveApiBase(); },
+
+    url: function (path) { return buildUrl(path); },
+
+    /* Course microservice base + fetch (Stripe payments, MinIO media). */
+    get courseBase() {
+      return (global.__ENV && global.__ENV.BACKEND_COURSE_GATEWAY_URL)
+        || 'http://localhost:3000/course-svc';
+    },
+    courseUrl: function (path) { return this.courseBase.replace(/\/+$/, '') + path; },
+    courseFetch: function (path, options) {
+      options = options || {};
+      options.headers = options.headers || {};
+      var token = safeGet(TOKEN_KEY);
+      if (token) options.headers['Authorization'] = 'Bearer ' + token;
+      if (!options.headers['Content-Type'] && options.body) {
+        options.headers['Content-Type'] = 'application/json';
+      }
+      return global.fetch(this.courseUrl(path), options);
+    },
 
     store: function (authResponse) {
       if (!authResponse) return;
@@ -117,7 +152,7 @@
       if (!options.headers['Content-Type'] && options.body) {
         options.headers['Content-Type'] = 'application/json';
       }
-      return global.fetch(API_BASE + path, options);
+      return global.fetch(buildUrl(path), options);
     },
 
     logout: function () {

@@ -201,10 +201,38 @@
 
         <p class="signin-line">Already have an account? <a href="login.html">Sign in</a></p>
       </form>
+
+      <!-- ============ Step 2: Email verification ============ -->
+      <div class="otp-step" id="otpStep" style="display:none;">
+        <div class="eyebrow">Almost there</div>
+        <h2>Verify your email</h2>
+        <p class="sub">We sent a 6-digit code to <b id="otpEmailLabel"></b>. Enter it below to finish creating your account.</p>
+
+        <div class="otp-inputs" id="otpInputs">
+          <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="1" class="otp-box" data-index="0" aria-label="Digit 1">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-box" data-index="1" aria-label="Digit 2">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-box" data-index="2" aria-label="Digit 3">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-box" data-index="3" aria-label="Digit 4">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-box" data-index="4" aria-label="Digit 5">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-box" data-index="5" aria-label="Digit 6">
+        </div>
+        <div class="hint err" id="otpHint" style="display:none;"></div>
+
+        <button class="btn-submit" type="button" id="verifyBtn">
+          <span class="spinner"></span>
+          <span class="btn-label">Verify &amp; create account</span>
+        </button>
+
+        <p class="resend-line" id="resendLine">
+          Didn't get the code? <a href="#" id="resendLink">Resend code</a>
+          <span class="resend-timer" id="resendTimer"></span>
+        </p>
+      </div>
     </div>
   </main>
 </div>
 
+<script src="env.js"></script>
 <script src="auth.js"></script>
 <script src="session.js"></script>
 <script src="animations.js"></script>
@@ -277,6 +305,7 @@
   // ---- Submit ----
   const form = document.getElementById('registerForm');
   const submitBtn = document.getElementById('submitBtn');
+  let pendingEmail = null;
 
   form.addEventListener('submit', function(e){
     e.preventDefault();
@@ -320,7 +349,7 @@
   submitBtn.classList.add('loading');
 submitBtn.disabled = true;
 
-fetch("http://localhost:8080/req/signup", {
+fetch(CourseConnectAuth.url("/req/signup"), {
     method: "POST",
     headers: {
         "Content-Type": "application/json"
@@ -339,18 +368,18 @@ fetch("http://localhost:8080/req/signup", {
     return response.json();
 })
 .then(data => {
-    console.log("Saved user:", data);
-    // Persist the JWT and send the user straight to their own profile.
-    CourseConnectAuth.store(data);
-    window.location.href = CourseConnectAuth.profileUrl(data.role);
+    console.log("Signup initiated:", data);
+    // Account is NOT created yet — move to the OTP verification step.
+    pendingEmail = email;
+    startOtpStep(email);
 })
 .catch(error => {
     console.error(error);
-    submitBtn.classList.remove("loading");
+     submitBtn.classList.remove("loading");
     submitBtn.disabled = false;
     if (error instanceof TypeError) {
         // Network / CORS failure ("Failed to fetch")
-        alert("Cannot reach the server. Make sure the auth service is running on http://localhost:8080 and try again.");
+        alert("Cannot reach the server. Make sure the API gateway is running at " + CourseConnectAuth.apiBase + " and try again.");
     } else {
         alert("Error: " + error.message);
     }
@@ -358,7 +387,179 @@ fetch("http://localhost:8080/req/signup", {
 .finally(() => {
     submitBtn.classList.remove("loading");
     submitBtn.disabled = false;
-});
+  });
+  });
+
+  // ============================================================
+  //  Step 2 — OTP verification
+  // ============================================================
+  const otpStep = document.getElementById('otpStep');
+  const otpEmailLabel = document.getElementById('otpEmailLabel');
+  const otpInputs = document.getElementById('otpInputs');
+  const otpBoxes = Array.from(otpInputs.querySelectorAll('.otp-box'));
+  const otpHint = document.getElementById('otpHint');
+  const verifyBtn = document.getElementById('verifyBtn');
+  const resendLink = document.getElementById('resendLink');
+  const resendTimer = document.getElementById('resendTimer');
+  let resendCountdown = null;
+
+  function showOtpError(msg){
+    otpHint.textContent = msg;
+    otpHint.style.display = 'block';
+  }
+  function clearOtpError(){
+    otpHint.style.display = 'none';
+    otpHint.textContent = '';
+  }
+
+  function startOtpStep(email){
+    form.style.display = 'none';
+    otpStep.style.display = 'block';
+    otpEmailLabel.textContent = email;
+    clearOtpError();
+    otpBoxes.forEach(b => { b.value = ''; b.classList.remove('filled'); });
+    otpBoxes[0].focus();
+    startResendCountdown(30);
+  }
+
+  function getOtp(){
+    return otpBoxes.map(b => b.value).join('');
+  }
+
+  // Auto-advance / backspace / paste behaviour for the 6 boxes.
+  otpBoxes.forEach((box, idx) => {
+    box.addEventListener('input', () => {
+      box.value = box.value.replace(/\D/g, '').slice(0, 1);
+      box.classList.toggle('filled', box.value !== '');
+      clearOtpError();
+      if (box.value && idx < otpBoxes.length - 1) otpBoxes[idx + 1].focus();
+    });
+    box.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !box.value && idx > 0) {
+        otpBoxes[idx - 1].focus();
+      }
+    });
+    box.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+      for (let i = 0; i < text.length && i < otpBoxes.length; i++) {
+        otpBoxes[i].value = text[i];
+        otpBoxes[i].classList.add('filled');
+      }
+      const next = Math.min(text.length, otpBoxes.length - 1);
+      otpBoxes[next].focus();
+    });
+  });
+
+  verifyBtn.addEventListener('click', () => {
+    const otp = getOtp();
+    if (otp.length !== 6) {
+      showOtpError('Please enter all 6 digits of the code.');
+      otpBoxes[0].focus();
+      return;
+    }
+
+    verifyBtn.classList.add('loading');
+    verifyBtn.disabled = true;
+
+    fetch(CourseConnectAuth.url("/req/verify-otp"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: pendingEmail, otp: otp })
+    })
+    .then(async response => {
+      if (!response.ok) {
+        let msg = "Verification failed (HTTP " + response.status + ")";
+        try {
+          const err = await response.json();
+          if (err && (err.message || err.error)) msg = err.message || err.error;
+        } catch (_) {}
+        throw new Error(msg);
+      }
+      return response.json();
+    })
+    .then(data => {
+      CourseConnectAuth.store(data);
+      window.location.href = CourseConnectAuth.profileUrl(data.role);
+    })
+    .catch(error => {
+      console.error(error);
+      verifyBtn.classList.remove("loading");
+      verifyBtn.disabled = false;
+      if (error instanceof TypeError) {
+        alert("Cannot reach the server. Make sure the API gateway is running at " + CourseConnectAuth.apiBase + " and try again.");
+      } else {
+        showOtpError(error.message);
+        otpBoxes.forEach(b => { b.value = ''; b.classList.remove('filled'); });
+        otpBoxes[0].focus();
+      }
+    })
+    .finally(() => {
+      verifyBtn.classList.remove("loading");
+      verifyBtn.disabled = false;
+    });
+  });
+
+  function startResendCountdown(seconds){
+    if (resendCountdown) clearInterval(resendCountdown);
+    let remaining = seconds;
+    resendLink.style.pointerEvents = 'none';
+    resendLink.style.opacity = '.5';
+    resendTimer.textContent = '(' + remaining + 's)';
+    resendCountdown = setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        clearInterval(resendCountdown);
+        resendLink.style.pointerEvents = 'auto';
+        resendLink.style.opacity = '1';
+        resendTimer.textContent = '';
+      } else {
+        resendTimer.textContent = '(' + remaining + 's)';
+      }
+    }, 1000);
+  }
+
+  resendLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (resendLink.style.pointerEvents === 'none') return;
+
+    resendLink.style.pointerEvents = 'none';
+    resendTimer.textContent = 'sending…';
+
+    fetch(CourseConnectAuth.url("/req/resend-otp"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: pendingEmail })
+    })
+    .then(async response => {
+      if (!response.ok) {
+        let msg = "Could not resend code (HTTP " + response.status + ")";
+        try {
+          const err = await response.json();
+          if (err && (err.message || err.error)) msg = err.message || err.error;
+        } catch (_) {}
+        throw new Error(msg);
+      }
+      return response.json();
+    })
+    .then(() => {
+      clearOtpError();
+      otpBoxes.forEach(b => { b.value = ''; b.classList.remove('filled'); });
+      otpBoxes[0].focus();
+      startResendCountdown(30);
+    })
+    .catch(error => {
+      console.error(error);
+      resendLink.style.pointerEvents = 'auto';
+      resendLink.style.opacity = '1';
+      resendTimer.textContent = '';
+      alert("Error: " + error.message);
+    });
+  });
+
+  // Submit the OTP form with the Enter key when focused in a box.
+  otpInputs.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); verifyBtn.click(); }
   });
 </script>
 </body>

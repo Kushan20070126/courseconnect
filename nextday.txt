@@ -1,0 +1,26 @@
+I built a full course-svc backend and rewired the frontend to use it. Backend compiles (mvnw -o compile → BUILD SUCCESS) and all frontend JS passes node --check.
+Backend — cource-svc (Spring Boot, Oracle + MinIO + Stripe)
+Mirrors aut-svc conventions; validates the same JWT (shared jwt.secret) and registers with Eureka as course-svc so the gateway routes /course-svc/** to it.
+Models/Data (model/): Course → Section → Lesson (cascade), plus Enrollment (PENDING→ACTIVE→COMPLETED, per-lesson completion + progress) and Payment.
+Services (service/):
+- MinioService — uploads videos/images to MinIO and returns time-limited presigned URLs for viewing.
+- StripeService — creates Checkout Sessions, verifies webhook signatures, and a dev confirm fallback (retrieves session if the webhook isn't configured).
+- CourseService — create/update/publish, public listing with search/category/level/sort, detail (videos only exposed to enrolled users or preview lessons), lecturer catalog + stats, thumbnail/lesson-video uploads.
+- EnrollmentService — enroll (free = instant ACTIVE; paid = Stripe checkout + PENDING enrollment), my-courses, learn (gated materials), complete-lesson (progress + badge on 100%).
+- PaymentService — webhook + confirm that activate enrollment & increment student count.
+Endpoints (controller/):
+- GET /req/courses, GET /req/courses/{id} (public)
+- POST/PUT/DELETE /req/courses/..., /publish, /thumbnail, /lessons/{id}/video, GET /req/lecturer/courses, GET /req/lecturer/stats (lecturer/admin)
+- POST /req/courses/{id}/enroll, GET /req/my-courses, GET /req/courses/{id}/learn, POST .../lessons/{id}/complete (student)
+- POST /req/payments/webhook (Stripe, public), GET /req/payments/confirm (student dev fallback)
+Frontend
+- .env now has BACKEND_COURSE_GATEWAY_URL=http://localhost:3000/course-svc/. auth.js gained courseBase/courseUrl/courseFetch.
+- courses.js — live catalog with search, category chips, level/sort filters.
+- course.js — real detail, enroll flow (free instant / Stripe redirect), gated lesson viewer (locked until enrolled, previews public), mark-complete → progress → badge.
+- create-course.js — lecturer wizard posts to the service, then uploads thumbnail + each lesson video to MinIO, and publishes.
+- New my-courses.html (student learning + badge) and lecturer-dashboard.html (stats + course monitoring); navbar now links students→"My courses", lecturers→"Teach".
+To run it
+1. course-svc needs: Oracle (FREEPDB1), a MinIO bucket (courseconnect, minioadmin/minioadmin), and Stripe keys in application.properties (currently placeholders).
+2. Start service-registry, api-gateway, aut-svc, then course-svc (port 8082). The gateway already rewrites /course-svc/** → the service.
+3. For real payments, set stripe.webhook-secret and point Stripe at http://localhost:3000/course-svc/req/payments/webhook; without it, the post-checkout confirm fallback still activates enrollment.
+Note: I verified compilation and JS syntax only — I couldn't run the full stack (no live Oracle/MinIO/Stripe here), so runtime behavior should be smoke-tested against those services.

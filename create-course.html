@@ -94,6 +94,10 @@
           <input type="text" id="fLang" value="English">
         </div>
         <div class="field">
+          <label for="fThumb">Course thumbnail image</label>
+          <input type="file" id="fThumb" accept="image/*">
+        </div>
+        <div class="field">
           <label>Thumbnail color</label>
           <div class="swatches" id="swatches">
             <button type="button" class="swatch active" data-grad="#4F46E5,#2E1F8F" style="background:linear-gradient(135deg,#4F46E5,#2E1F8F)"></button>
@@ -184,6 +188,7 @@
   <span>© 2026 CourseConnect. All rights reserved.</span>
 </footer>
 
+<script src="env.js"></script>
 <script src="auth.js"></script>
 <script src="session.js"></script>
 <script>
@@ -193,8 +198,6 @@
     Session.renderSiteNav();
   }
 </script>
-<script src="data.js"></script>
-<script src="store.js"></script>
 <script src="create-course.js"></script>
 </body>
 </html>

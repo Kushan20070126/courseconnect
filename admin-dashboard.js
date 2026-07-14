@@ -1,8 +1,11 @@
 /* ============================================================
-   CourseConnect — Admin dashboard (frontend only)
-   Admin role required. Data below is placeholder; swap the
-   static arrays for Session.api('/admin/...') calls once the
-   admin microservice exists.
+   CourseConnect — Admin dashboard
+   Admin role required. Pulls live data from the auth service:
+     GET  /req/admin/stats
+     GET  /req/admin/users
+     GET  /req/admin/lecturers/pending
+     POST /req/admin/lecturers/{id}/approve
+     POST /req/admin/lecturers/{id}/reject
    ============================================================ */
 (function () {
   'use strict';
@@ -21,48 +24,124 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
-  // ---- Placeholder stats (replace with Session.api later) ----
-  var stats = { users: 1280, students: 1184, lecturers: 96, courses: 412, pending: 7 };
-  document.getElementById('statUsers').textContent = stats.users;
-  document.getElementById('statStudents').textContent = stats.students;
-  document.getElementById('statLecturers').textContent = stats.lecturers;
-  document.getElementById('statCourses').textContent = stats.courses;
-  document.getElementById('statPending').textContent = stats.pending;
+  var statUsers = document.getElementById('statUsers');
+  var statStudents = document.getElementById('statStudents');
+  var statLecturers = document.getElementById('statLecturers');
+  var statCourses = document.getElementById('statCourses');
+  var statPending = document.getElementById('statPending');
+  var pendingCount = document.getElementById('pendingCount');
+  var userRows = document.getElementById('userRows');
+  var userEmpty = document.getElementById('userEmpty');
+  var approvalList = document.getElementById('approvalList');
+  var approvalEmpty = document.getElementById('approvalEmpty');
+  var dashError = document.getElementById('dashError');
 
-  // ---- Placeholder recent users ----
-  var users = [
-    { name: 'Ann Student',   email: 'ann.student@x.com',     role: 'student',  status: 'Active' },
-    { name: 'Prof. Daniel',  email: 'daniel@x.com',          role: 'lecturer', status: 'Active' },
-    { name: 'Mira Fernando', email: 'mira.f@x.com',          role: 'student',  status: 'Active' },
-    { name: 'Dr. Lee',       email: 'lee@x.com',             role: 'lecturer', status: 'Pending' },
-    { name: 'Kavi Perera',   email: 'kavi@x.com',            role: 'student',  status: 'Active' }
-  ];
-  var tbody = document.getElementById('userRows');
-  users.forEach(function (u) {
-    tbody.insertAdjacentHTML('beforeend',
-      '<tr>' +
-      '<td>' + esc(u.name) + '</td>' +
-      '<td>' + esc(u.email) + '</td>' +
-      '<td><span class="pill ' + esc(u.role) + '">' + esc(u.role) + '</span></td>' +
-      '<td><span class="pill ok">' + esc(u.status) + '</span></td>' +
-      '</tr>');
+  function showError(msg) {
+    dashError.textContent = msg;
+    dashError.style.display = 'block';
+  }
+
+  function statusPill(status) {
+    var cls = 'ok';
+    if (status === 'Pending') cls = 'warn';
+    else if (status === 'Rejected') cls = 'bad';
+    return '<span class="pill ' + cls + '">' + esc(status) + '</span>';
+  }
+
+  function loadStats() {
+    return Session.api('/req/admin/stats').then(function (res) {
+      if (!res.ok) throw new Error('Failed to load stats');
+      return res.json();
+    }).then(function (s) {
+      statUsers.textContent = s.users;
+      statStudents.textContent = s.students;
+      statLecturers.textContent = s.lecturers;
+      statCourses.textContent = s.courses;
+      statPending.textContent = s.pending;
+      pendingCount.textContent = s.pending;
+    });
+  }
+
+  function loadUsers() {
+    return Session.api('/req/admin/users').then(function (res) {
+      if (!res.ok) throw new Error('Failed to load users');
+      return res.json();
+    }).then(function (users) {
+      userRows.innerHTML = '';
+      if (!users.length) {
+        userEmpty.style.display = 'block';
+        return;
+      }
+      userEmpty.style.display = 'none';
+      users.forEach(function (u) {
+        userRows.insertAdjacentHTML('beforeend',
+          '<tr>' +
+          '<td>' + esc(u.name) + '</td>' +
+          '<td>' + esc(u.email) + '</td>' +
+          '<td><span class="pill ' + esc(u.role) + '">' + esc(u.role) + '</span></td>' +
+          '<td>' + statusPill(u.status) + '</td>' +
+          '</tr>');
+      });
+    });
+  }
+
+  function loadApprovals() {
+    return Session.api('/req/admin/lecturers/pending').then(function (res) {
+      if (!res.ok) throw new Error('Failed to load approvals');
+      return res.json();
+    }).then(function (list) {
+      approvalList.innerHTML = '';
+      if (!list.length) {
+        approvalEmpty.style.display = 'block';
+        return;
+      }
+      approvalEmpty.style.display = 'none';
+      list.forEach(function (a) {
+        approvalList.insertAdjacentHTML('beforeend',
+          '<div class="approval" data-id="' + esc(a.id) + '">' +
+          '<div class="approval-top">' +
+          '<b>' + esc(a.name) + '</b>' +
+          (a.title ? ' <span class="approval-title">' + esc(a.title) + '</span>' : '') +
+          ' &middot; <span class="approval-area">' + esc(a.area || 'General') + '</span>' +
+          '</div>' +
+          '<p class="approval-reason">' + esc(a.bio || 'No bio provided.') + '</p>' +
+          '<div class="approval-actions">' +
+          '<button class="mini approve" data-action="approve" data-id="' + esc(a.id) + '">Approve</button>' +
+          '<button class="mini reject" data-action="reject" data-id="' + esc(a.id) + '">Reject</button>' +
+          '</div></div>');
+      });
+    });
+  }
+
+  function decide(id, action) {
+    var card = approvalList.querySelector('.approval[data-id="' + id + '"]');
+    var btn = card ? card.querySelector('[data-action="' + action + '"]') : null;
+    if (btn) { btn.disabled = true; }
+
+    Session.api('/req/admin/lecturers/' + id + '/' + action, { method: 'POST' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Action failed (HTTP ' + res.status + ')');
+        return res.json();
+      })
+      .then(function () {
+        if (card) card.remove();
+        if (!approvalList.children.length) approvalEmpty.style.display = 'block';
+        return loadStats();
+      })
+      .catch(function (err) {
+        if (btn) btn.disabled = false;
+        showError(err.message || 'Could not complete the action.');
+      });
+  }
+
+  approvalList.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    decide(btn.dataset.id, btn.dataset.action);
   });
 
-  // ---- Placeholder lecturer approvals ----
-  var approvals = [
-    { name: 'Dr. Lee',     area: 'Machine Learning', reason: 'PhD in ML, 8 years teaching.' },
-    { name: 'Sara Nair',   area: 'Data Science',     reason: 'Lead data scientist, bootcamp instructor.' },
-    { name: 'Tom Whitfield', area: 'UX Design',      reason: '12 years product design experience.' }
-  ];
-  var list = document.getElementById('approvalList');
-  approvals.forEach(function (a) {
-    list.insertAdjacentHTML('beforeend',
-      '<div class="approval">' +
-      '<b>' + esc(a.name) + '</b> &middot; <span style="color:var(--ink-soft)">' + esc(a.area) + '</span>' +
-      '<p>' + esc(a.reason) + '</p>' +
-      '<div class="approval-actions">' +
-      '<button class="mini approve" disabled title="Available when the admin service is connected">Approve</button>' +
-      '<button class="mini" disabled title="Available when the admin service is connected">Reject</button>' +
-      '</div></div>');
-  });
+  Promise.all([loadStats(), loadUsers(), loadApprovals()])
+    .catch(function (err) {
+      showError(err.message || 'Could not load the admin dashboard.');
+    });
 })();

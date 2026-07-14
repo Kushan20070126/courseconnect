@@ -115,7 +115,11 @@
       var name = escapeHtml((this.user && (this.user.name || this.user.email)) || 'User');
       var role = escapeHtml(this.role || '');
       var dash = this.role === 'admin'
-        ? '<a class="cc-btn" href="admin-dashboard.html">Dashboard</a>' : '';
+        ? '<a class="cc-btn" href="admin-dashboard.html">Dashboard</a>'
+        : (this.role === 'lecturer'
+        ? '<a class="cc-btn" href="lecturer-dashboard.html">Teach</a>'
+        : (this.role === 'student'
+        ? '<a class="cc-btn" href="my-courses.html">My courses</a>' : ''));
       el.innerHTML = brand +
         '<div class="cc-nav-right">' +
         avatarHtml((this.user && this.user.name) || (this.user && this.user.email) || 'User') +
@@ -141,7 +145,11 @@
 
       var name = (this.user && (this.user.name || this.user.email)) || 'User';
       var dash = this.role === 'admin'
-        ? '<a class="btn-pill ghost" href="admin-dashboard.html">Dashboard</a>' : '';
+        ? '<a class="btn-pill ghost" href="admin-dashboard.html">Dashboard</a>'
+        : (this.role === 'lecturer'
+        ? '<a class="btn-pill ghost" href="lecturer-dashboard.html">Teach</a>'
+        : (this.role === 'student'
+        ? '<a class="btn-pill ghost" href="my-courses.html">My courses</a>' : ''));
       el.innerHTML =
         avatarHtml(name) +
         dash +
