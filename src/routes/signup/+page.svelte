@@ -188,7 +188,15 @@
 							class:done={i < step}
 							class:active={i === step}
 							class:clickable={i <= step}
+							role="button"
+							tabindex={i <= step ? 0 : -1}
 							onclick={() => goTo(i)}
+							onkeydown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									goTo(i);
+								}
+							}}
 						>
 							<span class="node">{i < step ? '✓' : i + 1}</span>
 							<span class="label">{m.title}</span>
@@ -624,7 +632,6 @@
 		border: 1px dashed rgba(255, 255, 255, 0.22);
 		right: 60px;
 		top: 40%;
-		animation: spin 34s linear infinite;
 	}
 	.ring-orbit .dot {
 		position: absolute;
@@ -728,17 +735,6 @@
 	.form-card {
 		width: 100%;
 		max-width: 440px;
-		animation: fadeUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
-	}
-	@keyframes fadeUp {
-		from {
-			opacity: 0;
-			transform: translateY(20px);
-		}
-		to {
-			opacity: 1;
-			transform: none;
-		}
 	}
 
 	.eyebrow {
@@ -1057,11 +1053,11 @@
 		border-radius: 14px;
 		background: #fbfbfe;
 		cursor: pointer;
-		transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, transform 0.15s;
+		transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 	}
 	.choice:hover {
 		border-color: #c5c8ee;
-		transform: translateY(-2px);
+		background: #fafaff;
 	}
 	.choice.selected {
 		border-color: #4f46e5;
@@ -1144,7 +1140,7 @@
 		justify-content: center;
 		gap: 9px;
 		overflow: hidden;
-		transition: transform 0.18s, box-shadow 0.18s, opacity 0.18s;
+		transition: box-shadow 0.18s, background 0.18s, opacity 0.18s;
 		text-decoration: none;
 	}
 	.btn-submit.inline {
@@ -1154,30 +1150,15 @@
 		margin-top: 6px;
 	}
 	.btn-submit:hover:not(:disabled) {
-		transform: translateY(-2px);
-		box-shadow: 0 16px 30px -10px rgba(79, 70, 229, 0.6);
+		background: linear-gradient(135deg, #4338ca, #5b53e0);
+		box-shadow: 0 14px 28px -10px rgba(79, 70, 229, 0.6);
 	}
 	.btn-submit:active:not(:disabled) {
-		transform: translateY(0);
+		background: linear-gradient(135deg, #3b30b8, #4f46e5);
 	}
 	.btn-submit:disabled {
 		opacity: 0.85;
 		cursor: default;
-	}
-	.btn-submit::after {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: -120%;
-		width: 60%;
-		height: 100%;
-		background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.28), transparent);
-		transform: skewX(-18deg);
-		transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-		pointer-events: none;
-	}
-	.btn-submit:hover:not(:disabled)::after {
-		left: 140%;
 	}
 	.spinner {
 		width: 15px;

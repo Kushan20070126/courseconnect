@@ -16,11 +16,14 @@
 	let mobileOpen = $state(false);
 	let menuOpen = $state(false);
 
-	const links = [
+	let links = $derived([
 		{ href: '/dashboard', label: 'Dashboard' },
 		{ href: '/courses', label: 'Courses' },
+		...(user?.role === 'LECTURER' || user?.role === 'ROLE_LECTURER'
+			? [{ href: '/lecturer/courses', label: 'My Courses' }]
+			: [{ href: '/my-courses', label: 'My Learning' }]),
 		{ href: '/me', label: 'My Profile' }
-	];
+	]);
 
 	let currentPath = $derived($page.url.pathname);
 
@@ -255,7 +258,7 @@
 		box-shadow: 0 10px 24px -10px rgba(79, 70, 229, 0.55);
 	}
 	.cc-btn.solid:hover {
-		transform: translateY(-2px);
+		background: linear-gradient(135deg, #4338ca, #5b53e0);
 	}
 
 	/* User menu */
@@ -317,17 +320,6 @@
 		box-shadow: 0 20px 48px -18px rgba(46, 31, 143, 0.28);
 		padding: 6px;
 		z-index: 50;
-		animation: cc-pop 0.16s ease;
-	}
-	@keyframes cc-pop {
-		from {
-			opacity: 0;
-			transform: translateY(-6px);
-		}
-		to {
-			opacity: 1;
-			transform: none;
-		}
 	}
 	.cc-menu-head {
 		padding: 10px 12px;

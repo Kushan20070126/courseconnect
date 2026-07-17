@@ -54,15 +54,24 @@
 					</div>
 					<p class="subtitle">{user.email}</p>
 				</div>
-				{#if !editing}
-					<button type="button" class="btn-edit" onclick={() => (editing = true)}>
+				<div class="cover-actions">
+					{#if !editing}
+						<button type="button" class="btn-edit" onclick={() => (editing = true)}>
+							<svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+								<path d="M13.5 3.5l3 3L7 16l-3.5.5L4 13l9.5-9.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+								<path d="M11.5 5.5l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+							</svg>
+							Edit profile
+						</button>
+					{/if}
+					<a href="/settings" class="btn-settings" aria-label="Settings">
 						<svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-							<path d="M13.5 3.5l3 3L7 16l-3.5.5L4 13l9.5-9.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
-							<path d="M11.5 5.5l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+							<path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5Z" stroke="currentColor" stroke-width="1.5" />
+							<path d="M16.5 10a6.5 6.5 0 00-.11-1.18l1.7-1.32-1.6-2.77-2 .8a6.6 6.6 0 00-2.04-1.18L11.9 1H8.1l-.45 2.35a6.6 6.6 0 00-2.04 1.18l-2-.8-1.6 2.77 1.7 1.32A6.5 6.5 0 003.5 10c0 .4.04.79.11 1.18l-1.7 1.32 1.6 2.77 2-.8a6.6 6.6 0 002.04 1.18L8.1 19h3.8l.45-2.35a6.6 6.6 0 002.04-1.18l2 .8 1.6-2.77-1.7-1.32c.07-.39.11-.78.11-1.18Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" />
 						</svg>
-						Edit profile
-					</button>
-				{/if}
+						Settings
+					</a>
+				</div>
 			</div>
 		</header>
 
@@ -444,6 +453,36 @@
 		border-color: #c5c8ee;
 		background: #f5f6fb;
 	}
+	.cover-actions {
+		display: flex;
+		gap: 10px;
+		margin-bottom: 4px;
+		flex-wrap: wrap;
+	}
+	.btn-settings {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		border: 1.5px solid #e7e8f2;
+		background: #fff;
+		color: #161a2b;
+		font-weight: 600;
+		font-size: 0.88rem;
+		padding: 10px 16px;
+		border-radius: 11px;
+		cursor: pointer;
+		text-decoration: none;
+		transition: border-color 0.2s, background 0.2s, transform 0.15s, color 0.2s;
+	}
+	.btn-settings svg {
+		width: 16px;
+		height: 16px;
+	}
+	.btn-settings:hover {
+		border-color: #c5c8ee;
+		background: #f5f6fb;
+		color: #4f46e5;
+	}
 
 	/* Alert */
 	.alert {
@@ -628,17 +667,6 @@
 	/* Edit form */
 	.edit-card {
 		margin-bottom: 22px;
-		animation: slideIn 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
-	}
-	@keyframes slideIn {
-		from {
-			opacity: 0;
-			transform: translateY(-8px);
-		}
-		to {
-			opacity: 1;
-			transform: none;
-		}
 	}
 	.x-close {
 		background: none;
@@ -723,7 +751,7 @@
 		box-shadow: 0 10px 24px -10px rgba(79, 70, 229, 0.55);
 	}
 	.btn.primary:hover:not(:disabled) {
-		transform: translateY(-2px);
+		background: linear-gradient(135deg, #4338ca, #5b53e0);
 	}
 	.btn.ghost {
 		background: #fff;

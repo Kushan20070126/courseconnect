@@ -3,10 +3,12 @@ import { fail, redirect } from '@sveltejs/kit';
 const SPRING_BOOT_API = 'http://localhost:8081/req/login';
 
 /** @type {import('./$types').PageServerLoad} */
-export async function load({ cookies }) {
+export async function load({ cookies, url }) {
 	if (cookies.get('session_token')) {
 		throw redirect(303, '/dashboard');
 	}
+	const redirectTo = url.searchParams.get('redirect');
+	return { redirectTo: redirectTo || '' };
 }
 
 /** @satisfies {import('./$types').Actions} */
@@ -15,6 +17,7 @@ export const actions = {
 		const data = await request.formData();
 		const email = data.get('email');
 		const password = data.get('password');
+		const redirectTo = data.get('redirect') || '';
 
 		const remember = data.get('remember') === 'on'; 
 
@@ -28,7 +31,12 @@ export const actions = {
 			const response = await fetch(SPRING_BOOT_API, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ email, password, remember })
+				body: JSON.stringify({
+					email,
+					password,
+					remember,
+					userAgent: request.headers.get('user-agent') ?? ''
+				})
 			});
 
 
@@ -50,7 +58,7 @@ export const actions = {
 			cookies.set('session_token', result.token, {
 				path: '/',
 				httpOnly: true,
-				sameSite: 'strict',
+				sameSite: 'lax',
 				secure: process.env.NODE_ENV === 'production', 
 				maxAge: cookieMaxAge
 			});
@@ -60,6 +68,7 @@ export const actions = {
 		}
 
 
-		throw redirect(303, '/dashboard');
+		const dest = redirectTo && redirectTo.startsWith('/') ? redirectTo : '/dashboard';
+		throw redirect(303, dest);
 	}
 };
