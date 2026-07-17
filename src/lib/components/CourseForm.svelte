@@ -115,23 +115,11 @@
 		// local object-URL preview stays in place until the page reloads.
 	}
 
-	// Resolve lesson ids for the just-saved course.
-	//   - edit mode: the ids are already seeded from `initial` (seed.sections).
-	//   - create mode: the server action only returns the course id, so we fetch
-	//     the created course's detail to get the authoritative section/lesson ids.
+	// Resolve section/lesson ids for the just-saved course.
+	// Always fetch fresh course detail to get authoritative IDs, because the
+	// backend recreates all sections/lessons on every update (no IDs sent from
+	// the form), so previously-cached IDs become stale after save.
 	async function resolveSavedSections(courseId) {
-		if (mode === 'edit') {
-			return seedSectionsSrc.length
-				? seedSectionsSrc.map((s) => ({
-						id: s.id,
-						lessons: (s.lessons ?? []).map((l) => ({ id: l.id }))
-					}))
-				: sections.map((s) => ({
-						id: s.id,
-						lessons: (s.lessons ?? []).map((l) => ({ id: l.id }))
-					}));
-		}
-		// create mode: fetch detail for authoritative ids
 		try {
 			const res = await fetch(`${courseApi()}/req/courses/${courseId}`, {
 				headers: { 'Content-Type': 'application/json' }
