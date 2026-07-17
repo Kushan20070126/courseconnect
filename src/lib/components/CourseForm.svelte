@@ -1,4 +1,8 @@
 <script>
+	import { untrack } from 'svelte';
+	import { enhance } from '$app/forms';
+	import { mediaUrl, courseApi } from '$lib/api.js';
+
 	/**
 	 * Reusable course create/edit form.
 	 * @type {{
@@ -10,22 +14,30 @@
 	 */
 	let { mode = 'create', action = '?/save', initial = null, submitLabel = 'Save course' } = $props();
 
-	let title = $state(initial?.title ?? '');
-	let summary = $state(initial?.summary ?? '');
-	let description = $state(initial?.description ?? '');
-	let category = $state(initial?.category ?? '');
-	let level = $state(initial?.level ?? '');
-	let language = $state(initial?.language ?? 'English');
-	let price = $state(initial?.price ?? '');
-	let instructorName = $state(initial?.instructorName ?? '');
-	let learnText = $state((initial?.learn ?? []).join('\n'));
-	let requirementsText = $state((initial?.requirements ?? []).join('\n'));
-	let thumbnailUrl = $state(initial?.thumbnailUrl ?? '');
+	// Snapshot the incoming props exactly once. `initial` is a reactive prop, so
+	// we read it inside untrack() to make it explicit that this form intentionally
+	// seeds its editable state from the initial value and does NOT re-sync when
+	// the prop later changes (which silences `state_referenced_locally`).
+	const seed = untrack(() => $state.snapshot(initial)) ?? {};
+	const seedSectionsSrc = seed.sections ?? [];
 
-	// Build sections/lessons state from initial (nested).
+	let title = $state(seed.title ?? '');
+	let summary = $state(seed.summary ?? '');
+	let description = $state(seed.description ?? '');
+	let category = $state(seed.category ?? '');
+	let level = $state(seed.level ?? '');
+	let language = $state(seed.language ?? 'English');
+	let price = $state(seed.price ?? '');
+	let instructorName = $state(seed.instructorName ?? '');
+	let learnText = $state((seed.learn ?? []).join('\n'));
+	let requirementsText = $state((seed.requirements ?? []).join('\n'));
+	let thumbnailUrl = $state(mediaUrl(seed.thumbnailUrl) ?? '');
+
+	// Build sections/lessons state from the snapshotted initial data (nested).
+	// On edit we also seed existing media (videoUrl, materials, notes) so the
+	// lecturer can preview what's already uploaded.
 	function seedSections(src) {
-		const arr = Array.isArray(src) ? src : initial?.sections ?? [];
-		return arr.map((s) => ({
+		return src.map((s) => ({
 			id: s.id,
 			title: s.title ?? '',
 			lessons: (s.lessons ?? []).map((l) => ({
@@ -34,13 +46,26 @@
 				description: l.description ?? '',
 				durationMinutes: l.durationMinutes != null ? String(l.durationMinutes) : '',
 				preview: !!l.preview,
-				notes: l.notes ?? '',
+				notes:
+					typeof l.notes === 'string'
+						? l.notes
+						: Array.isArray(l.notes)
+							? l.notes.map((n) => n.body ?? n.title ?? '').filter(Boolean).join('\n\n')
+							: '',
 				videoFile: null,
-				materials: [] // { file, title }
+				videoUrl: l.videoUrl ? mediaUrl(l.videoUrl) : '',
+				materials: (l.materials ?? []).map((m) => ({
+					id: m.id,
+					url: mediaUrl(m.url),
+					title: m.title || m.fileName || 'Material',
+					fileName: m.fileName || '',
+					sizeBytes: m.sizeBytes || 0,
+					file: null
+				}))
 			}))
 		}));
 	}
-	let sections = $state(seedSections());
+	let sections = $state(seedSections(seedSectionsSrc));
 	let thumbnailFile = $state(null);
 
 	function addSection() {
@@ -51,7 +76,10 @@
 	}
 	function addLesson(i) {
 		const next = sections.slice();
-		next[i].lessons = [...next[i].lessons, { title: '', description: '', durationMinutes: '', preview: false, notes: '', videoFile: null, materials: [] }];
+		next[i].lessons = [
+			...next[i].lessons,
+			{ title: '', description: '', durationMinutes: '', preview: false, notes: '', videoFile: null, materials: [] }
+		];
 		sections = next;
 	}
 	function removeLesson(i, j) {
@@ -64,32 +92,65 @@
 	let errorMessage = $state('');
 	let successMessage = $state('');
 
-	function authHeader() {
-		return {
-			Authorization: `Bearer ${document.cookie.replace(/(?:(?:^|.*;\s*)session_token\s*\=\s*((?:[^;](?!;))*[^;]?)?);.*$/, '$1')}`
-		};
+// Post a multipart upload through our same-origin /api/media proxy so the
+// session cookie is forwarded (the backend rejects cross-origin fetches).
+	async function uploadTo(path, fields) {
+		const fd = new FormData();
+		for (const [k, v] of Object.entries(fields)) fd.append(k, v);
+		const res = await fetch(`/api/media?u=${encodeURIComponent(path)}`, { method: 'POST', body: fd });
+		if (!res.ok) {
+			const txt = await res.text().catch(() => '');
+			throw new Error(`Upload failed (${res.status}): ${txt || path}`);
+		}
+		return res;
 	}
-	const COURSE_API = process.env.COURSE_API || 'http://localhost:8082';
 
 	async function uploadThumbnail(id) {
 		if (!thumbnailFile) return;
-		const fd = new FormData();
-		fd.append('file', thumbnailFile);
-		const res = await fetch(`${COURSE_API}/req/courses/${id}/thumbnail`, {
-			method: 'POST',
-			headers: authHeader(),
-			body: fd
-		});
-		if (res.ok) {
-			const data = await res.json().catch(() => ({}));
-			if (data.key) thumbnailUrl = `${COURSE_API}/req/courses/${id}/thumbnail?k=${encodeURIComponent(data.key)}`;
-		} else {
+		const res = await uploadTo(`/req/courses/${id}/thumbnail`, { file: thumbnailFile });
+		if (!res.ok) {
 			throw new Error('Thumbnail upload failed');
+		}
+		// The backend populates course.thumbnailUrl with a presigned URL; the
+		// local object-URL preview stays in place until the page reloads.
+	}
+
+	// Resolve lesson ids for the just-saved course.
+	//   - edit mode: the ids are already seeded from `initial` (seed.sections).
+	//   - create mode: the server action only returns the course id, so we fetch
+	//     the created course's detail to get the authoritative section/lesson ids.
+	async function resolveSavedSections(courseId) {
+		if (mode === 'edit') {
+			return seedSectionsSrc.length
+				? seedSectionsSrc.map((s) => ({
+						id: s.id,
+						lessons: (s.lessons ?? []).map((l) => ({ id: l.id }))
+					}))
+				: sections.map((s) => ({
+						id: s.id,
+						lessons: (s.lessons ?? []).map((l) => ({ id: l.id }))
+					}));
+		}
+		// create mode: fetch detail for authoritative ids
+		try {
+			const res = await fetch(`${courseApi()}/req/courses/${courseId}`, {
+				headers: { 'Content-Type': 'application/json' }
+			});
+			if (!res.ok) return null;
+			const detail = await res.json();
+			const secs = detail?.sections ?? [];
+			return secs.map((s) => ({
+				id: s.id,
+				lessons: (s.lessons ?? []).map((l) => ({ id: l.id }))
+			}));
+		} catch {
+			return null;
 		}
 	}
 
 	// Upload per-lesson video + materials + notes, matched by returned lesson id.
 	async function uploadLessonContent(id, savedSections) {
+		if (!savedSections) return;
 		for (let i = 0; i < sections.length; i++) {
 			const savedSec = savedSections[i];
 			if (!savedSec) continue;
@@ -101,68 +162,70 @@
 				const lessonId = savedLesson.id;
 
 				if (lesson.videoFile) {
-					const fd = new FormData();
-					fd.append('file', lesson.videoFile);
-					await fetch(`${COURSE_API}/req/lessons/${lessonId}/video`, {
-						method: 'POST', headers: authHeader(), body: fd
-					});
+					const res = await uploadTo(`/req/lessons/${lessonId}/video`, { file: lesson.videoFile });
+					const data = await res.json().catch(() => ({}));
+					if (data.key) {
+						lesson.videoUrl = `/api/media?u=${encodeURIComponent(`/req/media/${data.key}`)}`;
+					} else {
+						throw new Error(`Video upload for lesson "${lesson.title || lessonId}" returned no key`);
+					}
 				}
 				for (const m of lesson.materials || []) {
 					if (!m.file) continue;
-					const fd = new FormData();
-					fd.append('file', m.file);
-					fd.append('title', m.title || m.file.name);
-					await fetch(`${COURSE_API}/req/lessons/${lessonId}/materials`, {
-						method: 'POST', headers: authHeader(), body: fd
+					await uploadTo(`/req/lessons/${lessonId}/materials`, {
+						file: m.file,
+						title: m.title || m.file.name
 					});
 				}
 				if (lesson.notes && lesson.notes.trim()) {
-					await fetch(`${COURSE_API}/req/courses/${id}/notes`, {
+					const noteRes = await fetch(`/api/media?u=${encodeURIComponent(`/req/courses/${id}/notes`)}`, {
 						method: 'POST',
-						headers: { ...authHeader(), 'Content-Type': 'application/json' },
+						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ lessonId, title: lesson.title || 'Lesson note', body: lesson.notes })
 					});
+					if (!noteRes.ok) {
+						const noteTxt = await noteRes.text().catch(() => '');
+						throw new Error(`Note upload failed (${noteRes.status}): ${noteTxt}`);
+					}
 				}
 			}
 		}
 	}
 
-	async function handleSubmit(ev) {
-		const { result, update } = ev;
-		saving = false;
+	async function handleSubmit(input) {
+		const { result, update } = input;
 		if (result.type === 'success') {
-			errorMessage = '';
 			const data = result.data || {};
+			// `courseId` is the created id on create; on edit the response has no id,
+			// so fall back to the id seeded from `initial` (the existing course).
+			const courseId = data.id ?? seed.id;
 			try {
-				if (data.id && thumbnailFile) await uploadThumbnail(data.id);
-				// On create the response includes sections+lesson ids; on edit it
-				// does not, so fall back to the ids seeded from `initial`.
-				let savedSections = data.sections;
-				if ((!savedSections || savedSections.length === 0) && mode === 'edit') {
-					savedSections = sections.map((s) => ({
-						id: s.id,
-						lessons: (s.lessons ?? []).map((l) => ({ id: l.id }))
-					}));
-				}
-				if (data.id && savedSections) await uploadLessonContent(data.id, savedSections);
+				if (courseId && thumbnailFile) await uploadThumbnail(courseId);
+				// Resolve section/lesson ids (from seed on edit, or by fetching the
+				// freshly created course on create) and upload lesson media.
+				const savedSections = await resolveSavedSections(courseId);
+				if (courseId && savedSections) await uploadLessonContent(courseId, savedSections);
 				successMessage = 'Saved';
-				if (mode === 'create' && data.id) {
-					window.location.href = `/lecturer/courses/${data.id}/edit`;
+				if (mode === 'create' && courseId) {
+					window.location.href = `/lecturer/courses/${courseId}/edit`;
 					return;
 				}
 			} catch (e) {
 				errorMessage = e.message || 'Some files failed to upload';
 			}
 			await update();
+			saving = false;
 			return;
 		}
 		if (result.type === 'failure') {
 			errorMessage = result.data?.message || 'Could not save the course';
 			successMessage = '';
 			await update();
+			saving = false;
 			return;
 		}
 		await update();
+		saving = false;
 	}
 </script>
 
@@ -170,7 +233,15 @@
 	class="form"
 	method="POST"
 	{action}
-	use:enhance={handleSubmit}
+	enctype="multipart/form-data"
+	use:enhance={() => {
+		saving = true;
+		errorMessage = '';
+		successMessage = '';
+		return async (input) => {
+			await handleSubmit(input);
+		};
+	}}
 >
 	{#if errorMessage}
 		<div class="alert err">{errorMessage}</div>
@@ -248,10 +319,24 @@
 	<div class="row">
 		<label class="full">
 			Thumbnail image
-			<input type="file" name="thumbnail" accept="image/*" onchange={(e) => (thumbnailFile = e.currentTarget.files?.[0] ?? null)} />
-			{#if thumbnailUrl}
-				<div class="thumb-prev"><img src={thumbnailUrl} alt="thumbnail" /></div>
-			{/if}
+			<div class="thumb-drop">
+				{#if thumbnailUrl}
+					<img class="thumb-prev" src={thumbnailUrl} alt="thumbnail preview" />
+				{:else}
+					<div class="thumb-ph">No thumbnail yet</div>
+				{/if}
+				<div class="thumb-actions">
+					<input type="file" name="thumbnail" id="thumb-input" accept="image/*" onchange={(e) => {
+						const f = e.currentTarget.files?.[0] ?? null;
+						thumbnailFile = f;
+						thumbnailUrl = f ? URL.createObjectURL(f) : '';
+					}} hidden />
+					<label for="thumb-input" class="btn ghost sm">Choose image</label>
+					{#if thumbnailUrl}
+						<button type="button" class="btn ghost sm danger" onclick={() => { thumbnailUrl = ''; thumbnailFile = null; }}>Remove</button>
+					{/if}
+				</div>
+			</div>
 		</label>
 	</div>
 
@@ -281,6 +366,19 @@
 						<label class="full">
 							Lesson video
 							<input type="file" accept="video/*" onchange={(e) => (lesson.videoFile = e.currentTarget.files?.[0] ?? null)} />
+							{#if lesson.videoUrl}
+								<div class="ls-video">
+									<video src={lesson.videoUrl} controls preload="metadata">
+										<!-- Lecturer-uploaded preview has no caption file; an empty
+										     captions track satisfies a11y requirements. Replace src
+										     with a real .vtt file when captions are available. -->
+										<track kind="captions" />
+									</video>
+									<button type="button" class="btn ghost sm danger" onclick={() => (lesson.videoUrl = '')}>Remove existing video</button>
+								</div>
+							{:else if lesson.videoFile}
+								<span class="ls-filetag">New: {lesson.videoFile.name}</span>
+							{/if}
 						</label>
 
 						<div class="materials">
@@ -288,13 +386,16 @@
 							{#each lesson.materials as m, k (k)}
 								<div class="mat-row">
 									<input class="mat-title" placeholder="Title" bind:value={m.title} />
-									<span class="mat-name">{m.file?.name ?? 'file'}</span>
+									<span class="mat-name">{m.file?.name ?? m.fileName ?? 'file'}</span>
+									{#if m.url}
+										<a class="mat-view" href={m.url} target="_blank" rel="noreferrer">View</a>
+									{/if}
 									<button type="button" class="btn ghost sm danger" onclick={() => (lesson.materials = lesson.materials.filter((_, idx) => idx !== k))}>x</button>
 								</div>
 							{/each}
 							<input type="file" accept=".pdf,.ppt,.pptx,.doc,.docx,.zip,image/*" onchange={(e) => {
 								const f = e.currentTarget.files?.[0];
-								if (f) lesson.materials = [...lesson.materials, { file: f, title: '' }];
+								if (f) lesson.materials = [...lesson.materials, { file: f, title: '', url: '', fileName: f.name }];
 								e.currentTarget.value = '';
 							}} />
 						</div>
@@ -515,17 +616,55 @@
 		width: 110px;
 	}
 	.thumb-prev {
-		margin-top: 0.6rem;
-		width: 160px;
-		height: 90px;
-		border-radius: 10px;
-		overflow: hidden;
-	}
-	.thumb-prev img {
 		width: 100%;
-		height: 100%;
+		max-width: 280px;
+		height: 158px;
+		border-radius: 10px;
 		object-fit: cover;
+		display: block;
 	}
+	.thumb-drop {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+	.thumb-ph {
+		width: 100%;
+		max-width: 280px;
+		height: 158px;
+		border-radius: 10px;
+		border: 1.5px dashed #e0e2ec;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #8a90a0;
+		font-size: 0.85rem;
+		background: #fafbff;
+	}
+	.thumb-actions { display: flex; gap: 0.5rem; }
+	.ls-video { margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
+	.ls-video video {
+		width: 100%;
+		max-height: 240px;
+		border-radius: 10px;
+		background: #000;
+	}
+	.ls-filetag {
+		display: inline-block;
+		margin-top: 0.4rem;
+		font-size: 0.8rem;
+		color: #1f9d55;
+		background: #eafaf0;
+		padding: 3px 9px;
+		border-radius: 999px;
+	}
+	.mat-view {
+		font-size: 0.78rem;
+		color: #4f46e5;
+		text-decoration: none;
+		font-weight: 600;
+	}
+	.mat-view:hover { text-decoration: underline; }
 	.btn.sm {
 		padding: 0.45rem 0.8rem;
 		font-size: 0.82rem;

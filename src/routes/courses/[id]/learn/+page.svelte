@@ -1,5 +1,6 @@
 <script>
 	import { enhance } from '$app/forms';
+	import { mediaUrl } from '$lib/api.js';
 
 	let { data, form } = $props();
 
@@ -10,7 +11,6 @@
 	let progress = $derived(learn?.progressPercent ?? 0);
 	let completed = $derived(learn?.completed === true);
 
-	// Local optimistic completion state, keyed by lesson id.
 	let doneMap = $state({});
 
 	$effect(() => {
@@ -23,10 +23,53 @@
 		doneMap = m;
 	});
 
+	let selectedLesson = $state(null);
+	let selectedSection = $state(null);
+
+	$effect(() => {
+		if (sections.length === 0) return;
+		let found = false;
+		for (const s of sections) {
+			for (const l of s.lessons ?? []) {
+				if (!doneMap[l.id] && l.videoUrl) {
+					selectedLesson = l;
+					selectedSection = s;
+					found = true;
+					break;
+				}
+			}
+			if (found) break;
+		}
+		if (!found) {
+			for (const s of sections) {
+				for (const l of s.lessons ?? []) {
+					if (!doneMap[l.id]) {
+						selectedLesson = l;
+						selectedSection = s;
+						found = true;
+						break;
+					}
+				}
+				if (found) break;
+			}
+		}
+		if (!found) {
+			const lastSec = sections[sections.length - 1];
+			const lastLes = lastSec?.lessons?.[lastSec.lessons.length - 1];
+			selectedLesson = lastLes ?? null;
+			selectedSection = lastSec ?? null;
+		}
+	});
+
 	let totalLessons = $derived(
 		sections.reduce((acc, s) => acc + (s.lessons?.length ?? 0), 0)
 	);
 	let doneCount = $derived(Object.values(doneMap).filter(Boolean).length);
+
+	function selectLesson(lesson, section) {
+		selectedLesson = lesson;
+		selectedSection = section;
+	}
 
 	function onComplete(lessonId) {
 		return async ({ result, update }) => {
@@ -56,7 +99,6 @@
 				<span class="badge done">Completed 🏆</span>
 			{/if}
 		</div>
-
 		<div class="progress">
 			<div class="bar"><div class="fill" style="width:{progress}%"></div></div>
 			<span class="pct">{progress}% · {doneCount}/{totalLessons} lessons</span>
@@ -70,104 +112,138 @@
 	{#if sections.length === 0}
 		<div class="empty">No lessons available for this course yet.</div>
 	{:else}
-		<div class="sections">
-			{#each sections as section, i (section.id)}
-				<section class="card">
-					<h2 class="sec-title">{i + 1}. {section.title}</h2>
-					<ul class="lessons">
-						{#each section.lessons ?? [] as lesson (lesson.id)}
-							<li class="lesson" class:done={doneMap[lesson.id]}>
-								<div class="l-main">
-									<div class="l-head">
-										<span class="l-title">{lesson.title}</span>
+		<div class="layout">
+			<div class="main">
+				{#if selectedLesson}
+					<div class="player-wrap">
+						{#if selectedLesson.videoUrl}
+						<video
+							class="player"
+							src={mediaUrl(selectedLesson.videoUrl)}
+							controls
+							playsinline
+						>
+							Your browser does not support the video tag.
+						</video>
+						{:else}
+							<div class="player ph">
+								<span>No video available for this lesson</span>
+							</div>
+						{/if}
+					</div>
+
+					<div class="lesson-detail">
+						<div class="ld-head">
+							<h2 class="ld-title">{selectedLesson.title}</h2>
+							<div class="ld-meta">
+								{#if selectedLesson.preview}
+									<span class="tag preview">Preview</span>
+								{/if}
+								{#if doneMap[selectedLesson.id]}
+									<span class="tag ok">Done</span>
+								{/if}
+								<span class="dur">{selectedLesson.durationMinutes ?? 0} min</span>
+							</div>
+						</div>
+
+						{#if selectedLesson.description}
+							<p class="ld-desc">{selectedLesson.description}</p>
+						{/if}
+
+						{#if selectedLesson.materials && selectedLesson.materials.length}
+							<div class="ld-materials">
+								<div class="ld-section-title">📎 Materials</div>
+								<ul>
+									{#each selectedLesson.materials as mat (mat.id)}
+										<li>
+											<a href={mediaUrl(mat.url)} target="_blank" rel="noreferrer" class="mat-link">
+												{mat.title || mat.fileName || 'Material'}
+											</a>
+											{#if mat.sizeBytes}
+												<span class="mat-size">({Math.round(mat.sizeBytes / 1024)} KB)</span>
+											{/if}
+										</li>
+									{/each}
+								</ul>
+							</div>
+						{/if}
+
+						{#if selectedLesson.notes && selectedLesson.notes.length}
+							<div class="ld-notes">
+								<div class="ld-section-title">📝 Lecture notes</div>
+								{#each selectedLesson.notes as n (n.id)}
+									<div class="note">
+										{#if n.title}<div class="note-title">{n.title}</div>{/if}
+										<p class="note-body">{n.body}</p>
+									</div>
+								{/each}
+							</div>
+						{/if}
+
+						<div class="ld-actions">
+							<form method="POST" action="?/complete" use:enhance={onComplete(selectedLesson.id)}>
+								<input type="hidden" name="lessonId" value={selectedLesson.id} />
+								<button
+									class="btn complete"
+									class:on={doneMap[selectedLesson.id]}
+									type="submit"
+								>
+									{doneMap[selectedLesson.id] ? '✓ Completed' : 'Mark as complete'}
+								</button>
+							</form>
+						</div>
+					</div>
+				{/if}
+			</div>
+
+			<aside class="sidebar">
+				<h3 class="sb-title">Course content</h3>
+				<div class="sb-list">
+					{#each sections as section, si (section.id)}
+						<div class="sb-section">
+							<div class="sb-sec-title">
+								<span class="sb-sec-num">{si + 1}</span>
+								{section.title}
+							</div>
+							<ul class="sb-lessons">
+								{#each section.lessons ?? [] as lesson (lesson.id)}
+									<li
+										class="sb-lesson"
+										class:active={selectedLesson?.id === lesson.id}
+										class:done={doneMap[lesson.id]}
+										onclick={() => selectLesson(lesson, section)}
+										role="button"
+										tabindex="0"
+										onkeydown={(e) => e.key === 'Enter' && selectLesson(lesson, section)}
+									>
+										<span class="sb-play">{doneMap[lesson.id] ? '✓' : '▶'}</span>
+										<span class="sb-ltitle">{lesson.title}</span>
 										{#if lesson.preview}
 											<span class="tag preview">Preview</span>
 										{/if}
-										{#if doneMap[lesson.id]}
-											<span class="tag ok">Done</span>
-										{/if}
-									</div>
-									{#if lesson.description}
-										<p class="l-desc">{lesson.description}</p>
-									{/if}
-									<div class="l-actions">
-										{#if lesson.videoUrl}
-											<a class="btn ghost" href={lesson.videoUrl} target="_blank" rel="noreferrer">
-												Watch video
-											</a>
-										{/if}
-										<span class="dur">{lesson.durationMinutes ?? 0} min</span>
-									</div>
-
-									{#if lesson.materials && lesson.materials.length}
-										<div class="materials">
-											<div class="mat-label">Materials</div>
-											<ul>
-												{#each lesson.materials as mat (mat.id)}
-													<li>
-														<a href={mat.url} target="_blank" rel="noreferrer" class="mat-link">
-															📎 {mat.title || mat.fileName || 'Material'}
-														</a>
-														{#if mat.sizeBytes}
-															<span class="mat-size">({Math.round(mat.sizeBytes / 1024)} KB)</span>
-														{/if}
-													</li>
-												{/each}
-											</ul>
-										</div>
-									{/if}
-
-									{#if lesson.notes && lesson.notes.length}
-										<div class="notes">
-											<div class="notes-label">Lecture notes</div>
-											{#each lesson.notes as n (n.id)}
-												{#if n.title}<div class="note-title">{n.title}</div>{/if}
-												<p class="note-body">{n.body}</p>
-											{/each}
-										</div>
-									{/if}
-								</div>
-
-								<div class="check">
-									<form method="POST" action="?/complete" use:enhance={onComplete(lesson.id)}>
-										<input type="hidden" name="lessonId" value={lesson.id} />
-										<button
-											class="circle"
-											class:on={doneMap[lesson.id]}
-											type="submit"
-											aria-label={doneMap[lesson.id] ? 'Mark incomplete' : 'Mark complete'}
-											title={doneMap[lesson.id] ? 'Mark incomplete' : 'Mark complete'}
-											onclick={(e) => {
-												// Optimistic toggle; server is the source of truth.
-												e.preventDefault();
-												toggle(lesson.id);
-												e.currentTarget.form.requestSubmit();
-											}}
-										>
-											{#if doneMap[lesson.id]}✓{:else}○{/if}
-										</button>
-									</form>
-								</div>
-							</li>
-						{/each}
-					</ul>
-				</section>
-			{/each}
+										<span class="sb-dur">{lesson.durationMinutes ?? 0} min</span>
+									</li>
+								{/each}
+							</ul>
+						</div>
+					{/each}
+				</div>
+			</aside>
 		</div>
 	{/if}
 </div>
 
 <style>
 	.page {
-		max-width: 880px;
+		max-width: 1200px;
 		margin: 0 auto;
-		padding: 2rem 1.5rem 4rem;
+		padding: 1.5rem 1.5rem 4rem;
 		font-family: 'Inter', system-ui, sans-serif;
 		color: #161a2b;
 	}
 	.back {
 		display: inline-block;
-		margin-bottom: 1rem;
+		margin-bottom: 0.8rem;
 		color: #5b6072;
 		text-decoration: none;
 		font-size: 0.9rem;
@@ -183,7 +259,7 @@
 	}
 	.head h1 {
 		font-family: 'Space Grotesk', sans-serif;
-		font-size: 1.8rem;
+		font-size: 1.6rem;
 		margin: 0;
 	}
 	.badge.done {
@@ -195,14 +271,14 @@
 		border-radius: 999px;
 	}
 	.progress {
-		margin-top: 1rem;
+		margin-top: 0.8rem;
 		display: flex;
 		align-items: center;
 		gap: 12px;
 	}
 	.bar {
 		flex: 1;
-		height: 10px;
+		height: 8px;
 		background: #eef0f5;
 		border-radius: 999px;
 		overflow: hidden;
@@ -233,51 +309,65 @@
 		border: 1.5px dashed #e7e8f2;
 		border-radius: 14px;
 	}
-	.sections {
+
+	.layout {
+		display: grid;
+		grid-template-columns: 1fr 340px;
+		gap: 1.5rem;
+		margin-top: 1.4rem;
+		align-items: start;
+	}
+	.main {
 		display: flex;
 		flex-direction: column;
-		gap: 1.2rem;
-		margin-top: 1.6rem;
+		gap: 1rem;
 	}
-	.card {
+	.player-wrap {
+		background: #000;
+		border-radius: 14px;
+		overflow: hidden;
+		box-shadow: 0 12px 32px rgba(20, 26, 43, 0.15);
+	}
+	.player {
+		width: 100%;
+		display: block;
+		max-height: 70vh;
+		background: #000;
+	}
+	.player.ph {
+		aspect-ratio: 16 / 9;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #c8cbe0;
+		font-size: 1rem;
+	}
+
+	.lesson-detail {
 		background: #fff;
 		border: 1px solid #ecedf3;
-		border-radius: 16px;
+		border-radius: 14px;
 		padding: 1.2rem 1.4rem;
 		box-shadow: 0 8px 24px rgba(20, 26, 43, 0.05);
 	}
-	.sec-title {
-		font-family: 'Space Grotesk', sans-serif;
-		font-size: 1.15rem;
-		margin: 0 0 0.8rem;
-	}
-	.lessons {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
-	.lesson {
+	.ld-head {
 		display: flex;
 		align-items: flex-start;
+		justify-content: space-between;
 		gap: 12px;
-		padding: 0.85rem 0;
-		border-top: 1px solid #f1f2f7;
+		flex-wrap: wrap;
 	}
-	.lesson:first-child {
-		border-top: none;
-	}
-	.l-main {
+	.ld-title {
+		font-family: 'Space Grotesk', sans-serif;
+		font-size: 1.15rem;
+		margin: 0;
 		flex: 1;
-		min-width: 0;
 	}
-	.l-head {
+	.ld-meta {
 		display: flex;
 		align-items: center;
 		gap: 8px;
 		flex-wrap: wrap;
-	}
-	.l-title {
-		font-weight: 600;
 	}
 	.tag {
 		font-size: 0.7rem;
@@ -295,94 +385,190 @@
 		background: #eafaf0;
 		color: #1f9d55;
 	}
-	.l-desc {
-		margin: 0.35rem 0 0.5rem;
-		color: #5b6072;
-		font-size: 0.88rem;
-		line-height: 1.5;
-	}
-	.l-actions {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-	}
 	.dur {
 		font-size: 0.8rem;
 		color: #8a90a0;
 	}
-	.materials {
-		margin-top: 0.7rem;
-		padding: 0.7rem 0.85rem;
-		background: #f8f9fc;
-		border: 1px solid #eef0f5;
-		border-radius: 10px;
+	.ld-desc {
+		margin: 0.8rem 0 0;
+		color: #3a3f52;
+		font-size: 0.95rem;
+		line-height: 1.6;
+		white-space: pre-wrap;
 	}
-	.mat-label, .notes-label {
-		font-size: 0.72rem;
+
+	.ld-section-title {
+		font-size: 0.78rem;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		color: #6b7180;
-		margin-bottom: 0.4rem;
+		margin-bottom: 0.5rem;
 	}
-	.materials ul { list-style: none; margin: 0; padding: 0; }
-	.materials li { padding: 3px 0; }
-	.mat-link { color: #4f46e5; text-decoration: none; font-size: 0.86rem; font-weight: 500; }
+	.ld-materials {
+		margin-top: 1rem;
+		padding: 0.8rem 1rem;
+		background: #f8f9fc;
+		border: 1px solid #eef0f5;
+		border-radius: 10px;
+	}
+	.ld-materials ul { list-style: none; margin: 0; padding: 0; }
+	.ld-materials li { padding: 4px 0; }
+	.mat-link { color: #4f46e5; text-decoration: none; font-size: 0.9rem; font-weight: 500; }
 	.mat-link:hover { text-decoration: underline; }
-	.mat-size { font-size: 0.74rem; color: #9aa0b4; margin-left: 4px; }
-	.notes {
-		margin-top: 0.7rem;
-		padding: 0.7rem 0.85rem;
+	.mat-size { font-size: 0.78rem; color: #9aa0b4; margin-left: 4px; }
+
+	.ld-notes {
+		margin-top: 1rem;
+		padding: 0.8rem 1rem;
 		background: #fffdf5;
 		border: 1px solid #f3ecd6;
 		border-radius: 10px;
 	}
-	.note-title { font-weight: 600; font-size: 0.86rem; margin-bottom: 2px; }
-	.note-body { margin: 0; color: #5b6072; font-size: 0.86rem; line-height: 1.5; white-space: pre-wrap; }
+	.note { margin-bottom: 0.6rem; }
+	.note:last-child { margin-bottom: 0; }
+	.note-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 2px; }
+	.note-body { margin: 0; color: #5b6072; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; }
+
+	.ld-actions {
+		margin-top: 1rem;
+	}
 	.btn {
 		display: inline-block;
 		text-align: center;
-		padding: 0.45rem 0.9rem;
+		padding: 0.55rem 1.1rem;
 		border-radius: 9px;
 		font-weight: 600;
-		font-size: 0.85rem;
+		font-size: 0.9rem;
 		border: 1.5px solid transparent;
 		cursor: pointer;
 		text-decoration: none;
+		appearance: none;
+		-webkit-appearance: none;
 	}
-	.btn.ghost {
-		background: #f5f6fb;
-		color: #161a2b;
-		border-color: #e7e8f2;
+	.btn.complete {
+		background: #4f46e5;
+		color: #fff;
+		border-color: #4f46e5;
 	}
-	.btn.ghost:hover {
-		background: #eceef5;
+	.btn.complete:hover {
+		background: #4338ca;
+		border-color: #4338ca;
 	}
-	.check {
-		flex-shrink: 0;
+	.btn.complete.on {
+		background: #eafaf0;
+		color: #1f9d55;
+		border-color: #1f9d55;
 	}
-	.circle {
-		width: 34px;
-		height: 34px;
-		border-radius: 50%;
-		border: 2px solid #c7cbd8;
+	.btn.complete.on:hover {
+		background: #d0f0de;
+	}
+
+	/* Sidebar */
+	.sidebar {
 		background: #fff;
-		color: #9aa0b4;
+		border: 1px solid #ecedf3;
+		border-radius: 14px;
+		padding: 1rem;
+		box-shadow: 0 8px 24px rgba(20, 26, 43, 0.05);
+		max-height: calc(100vh - 120px);
+		overflow-y: auto;
+		position: sticky;
+		top: 1.5rem;
+	}
+	.sb-title {
+		font-family: 'Space Grotesk', sans-serif;
 		font-size: 1rem;
-		cursor: pointer;
+		margin: 0 0 0.8rem;
+		padding-bottom: 0.6rem;
+		border-bottom: 1px solid #f1f2f7;
+	}
+	.sb-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+	.sb-section {
+		border: 1px solid #eef0f5;
+		border-radius: 10px;
+		overflow: hidden;
+	}
+	.sb-sec-title {
 		display: flex;
 		align-items: center;
-		justify-content: center;
-		transition: all 0.18s ease;
+		gap: 8px;
+		padding: 0.6rem 0.8rem;
+		background: #fafbff;
+		font-weight: 600;
+		font-size: 0.85rem;
 	}
-	.circle.on {
-		border-color: #1f9d55;
-		background: #1f9d55;
+	.sb-sec-num {
+		width: 20px;
+		height: 20px;
+		border-radius: 5px;
+		background: #161a2b;
 		color: #fff;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.7rem;
+		flex-shrink: 0;
 	}
-	@media (max-width: 600px) {
-		.head h1 {
-			font-size: 1.4rem;
+	.sb-lessons {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.sb-lesson {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 0.55rem 0.8rem;
+		border-top: 1px solid #f4f5fa;
+		cursor: pointer;
+		font-size: 0.85rem;
+		color: #3a3f52;
+		transition: background 0.15s ease;
+	}
+	.sb-lesson:hover {
+		background: #f5f6fb;
+	}
+	.sb-lesson.active {
+		background: #eef2ff;
+		color: #4338ca;
+	}
+	.sb-lesson.done {
+		color: #1f9d55;
+	}
+	.sb-play {
+		font-size: 0.65rem;
+		width: 18px;
+		text-align: center;
+		flex-shrink: 0;
+	}
+	.sb-ltitle {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.sb-dur {
+		font-size: 0.75rem;
+		color: #8a90a0;
+		flex-shrink: 0;
+	}
+
+	@media (max-width: 860px) {
+		.layout {
+			grid-template-columns: 1fr;
+		}
+		.sidebar {
+			position: static;
+			max-height: none;
+		}
+		.player {
+			max-height: 50vh;
 		}
 	}
 </style>
