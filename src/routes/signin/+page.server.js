@@ -2,7 +2,9 @@ import { fail, redirect } from '@sveltejs/kit';
 
 const SPRING_BOOT_API = 'http://localhost:8081/req/login';
 
-/** @type {import('./$types').PageServerLoad} */
+/**
+ * Redirects users with an existing session to the dashboard.
+ */
 export async function load({ cookies }) {
 	if (cookies.get('session_token')) {
 		throw redirect(303, '/dashboard');

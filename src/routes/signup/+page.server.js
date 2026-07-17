@@ -2,7 +2,11 @@ import { fail, redirect } from '@sveltejs/kit';
 
 const BACKEND_URL = 'http://localhost:8081';
 
-/** @param {string} text */
+/**
+ * Parses text as JSON and falls back to a message object when parsing fails.
+ * @param {string} text - The text to parse.
+ * @returns {*} The parsed JSON value or an object containing the original text.
+ */
 function tryParseJson(text) {
   try {
     return JSON.parse(text);
@@ -12,7 +16,9 @@ function tryParseJson(text) {
   }
 }
 
-/** @type {import('./$types').PageServerLoad} */
+/**
+ * Redirect authenticated users to the dashboard.
+ */
 export async function load({ cookies }) {
   if (cookies.get('session_token')) {
     throw redirect(303, '/dashboard');

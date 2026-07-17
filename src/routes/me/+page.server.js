@@ -2,7 +2,11 @@ import { redirect, error, fail } from '@sveltejs/kit';
 
 const BACKEND_URL = 'http://localhost:8081';
 
-/** @param {string} text */
+/**
+ * Parses text as JSON and provides the original text as a message when parsing fails.
+ * @param {string} text - The text to parse.
+ * @return {*} The parsed JSON value or an object containing the original text as `message`.
+ */
 function tryParseJson(text) {
 	try {
 		return JSON.parse(text);
@@ -11,7 +15,12 @@ function tryParseJson(text) {
 	}
 }
 
-/** @type {import('./$types').PageServerLoad} */
+/**
+ * Loads the authenticated user's profile.
+ * @param {Object} params - The SvelteKit load context.
+ * @param {Object} params.cookies - Cookie access for reading the session token and clearing it when unauthorized.
+ * @returns {Object} An object containing the user's profile.
+ */
 export async function load({ cookies }) {
 	const token = cookies.get('session_token');
 
