@@ -70,25 +70,6 @@
 		selectedLesson = lesson;
 		selectedSection = section;
 	}
-
-	function onComplete(lessonId) {
-		return async ({ result, update }) => {
-			if (result.type === 'success') {
-				doneMap[lessonId] = true;
-				if (result.data?.progressPercent != null) {
-					progress = result.data.progressPercent;
-				}
-				if (result.data?.completed) {
-					completed = true;
-				}
-			}
-			await update();
-		};
-	}
-
-	function toggle(lessonId) {
-		doneMap[lessonId] = !doneMap[lessonId];
-	}
 </script>
 
 <svelte:head>
@@ -186,18 +167,34 @@
 							</div>
 						{/if}
 
-						<div class="ld-actions">
-							<form method="POST" action="?/complete" use:enhance={onComplete(selectedLesson.id)}>
-								<input type="hidden" name="lessonId" value={selectedLesson.id} />
-								<button
-									class="btn complete"
-									class:on={doneMap[selectedLesson.id]}
-									type="submit"
-								>
-									{doneMap[selectedLesson.id] ? '✓ Completed' : 'Mark as complete'}
-								</button>
-							</form>
-						</div>
+					<div class="ld-actions">
+						<form method="POST" action="?/complete" use:enhance={() => {
+							return async ({ result, update }) => {
+								if (result.type === 'success') {
+									doneMap[selectedLesson.id] = true;
+									if (result.data?.progressPercent != null) {
+										progress = result.data.progressPercent;
+									}
+									if (result.data?.completed) {
+										completed = true;
+									}
+								}
+								if (result.type === 'failure') {
+									alert(result.data?.message || 'Could not mark as complete');
+								}
+								await update();
+							};
+						}}>
+							<input type="hidden" name="lessonId" value={selectedLesson.id} />
+							<button
+								class="btn complete"
+								class:on={doneMap[selectedLesson.id]}
+								type="submit"
+							>
+								{doneMap[selectedLesson.id] ? '✓ Completed' : 'Mark as complete'}
+							</button>
+						</form>
+					</div>
 					</div>
 				{/if}
 			</div>
