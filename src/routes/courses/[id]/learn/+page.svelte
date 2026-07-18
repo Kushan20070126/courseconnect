@@ -128,6 +128,7 @@
 							controls
 							playsinline
 						>
+							<track kind="captions" />
 							Your browser does not support the video tag.
 						</video>
 						{:else}
@@ -212,21 +213,21 @@
 							</div>
 							<ul class="sb-lessons">
 								{#each section.lessons ?? [] as lesson (lesson.id)}
-									<li
-										class="sb-lesson"
-										class:active={selectedLesson?.id === lesson.id}
-										class:done={doneMap[lesson.id]}
-										onclick={() => selectLesson(lesson, section)}
-										role="button"
-										tabindex="0"
-										onkeydown={(e) => e.key === 'Enter' && selectLesson(lesson, section)}
-									>
-										<span class="sb-play">{doneMap[lesson.id] ? '✓' : '▶'}</span>
-										<span class="sb-ltitle">{lesson.title}</span>
-										{#if lesson.preview}
-											<span class="tag preview">Preview</span>
-										{/if}
-										<span class="sb-dur">{lesson.durationMinutes ?? 0} min</span>
+									<li>
+										<button
+											class="sb-lesson"
+											class:active={selectedLesson?.id === lesson.id}
+											class:done={doneMap[lesson.id]}
+											onclick={() => selectLesson(lesson, section)}
+											onkeydown={(e) => e.key === 'Enter' && selectLesson(lesson, section)}
+										>
+											<span class="sb-play">{doneMap[lesson.id] ? '✓' : '▶'}</span>
+											<span class="sb-ltitle">{lesson.title}</span>
+											{#if lesson.preview}
+												<span class="tag preview">Preview</span>
+											{/if}
+											<span class="sb-dur">{lesson.durationMinutes ?? 0} min</span>
+										</button>
 									</li>
 								{/each}
 							</ul>
@@ -528,12 +529,17 @@
 		display: flex;
 		align-items: center;
 		gap: 8px;
+		width: 100%;
 		padding: 0.55rem 0.8rem;
 		border-top: 1px solid #f4f5fa;
-		cursor: pointer;
+		background: transparent;
 		font-size: 0.85rem;
 		color: #3a3f52;
 		transition: background 0.15s ease;
+		cursor: pointer;
+		border: none;
+		text-align: left;
+		font-family: inherit;
 	}
 	.sb-lesson:hover {
 		background: #f5f6fb;
