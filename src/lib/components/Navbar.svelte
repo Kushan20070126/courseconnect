@@ -21,7 +21,7 @@
 		{ href: '/courses', label: 'Courses' },
 		...(user?.role === 'LECTURER' || user?.role === 'ROLE_LECTURER'
 			? [{ href: '/lecturer/courses', label: 'My Courses' }]
-			: []),
+			: [{ href: '/my-courses', label: 'My Learning' }]),
 		{ href: '/me', label: 'My Profile' }
 	]);
 
