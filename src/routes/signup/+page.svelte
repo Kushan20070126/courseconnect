@@ -20,25 +20,38 @@
 		confirmPassword: '',
 		role: 'student',
 		educationLevel: '',
-		interest: '',
-		goal: '',
+		interest: [],
+		goal: [],
 		title: '',
 		experience: '',
 		area: [],
 		bio: ''
 	});
 
+	let interestInput = $state('');
+	let goalInput = $state('');
 	let areaInput = $state('');
 
-	function addArea() {
-		const v = areaInput.trim();
-		if (v && !data.area.includes(v)) {
-			data.area = [...data.area, v];
+	function addInterest() {
+		const v = interestInput.trim();
+		if (v && !data.interest.includes(v)) {
+			data.interest = [...data.interest, v];
 		}
-		areaInput = '';
+		interestInput = '';
 	}
-	function removeArea(i) {
-		data.area = data.area.filter((_, idx) => idx !== i);
+	function removeInterest(i) {
+		data.interest = data.interest.filter((_, idx) => idx !== i);
+	}
+
+	function addGoal() {
+		const v = goalInput.trim();
+		if (v && !data.goal.includes(v)) {
+			data.goal = [...data.goal, v];
+		}
+		goalInput = '';
+	}
+	function removeGoal(i) {
+		data.goal = data.goal.filter((_, idx) => idx !== i);
 	}
 
 	let currentStep = $derived(form?.step ?? 'initiate');
@@ -69,8 +82,8 @@
 		} else if (s === 2) {
 			if (data.role === 'student') {
 				if (!data.educationLevel) e.educationLevel = 'Select your education level';
-				if (!data.interest.trim()) e.interest = 'Interests are required';
-				if (!data.goal.trim()) e.goal = 'Career goal is required';
+				if (!data.interest.length) e.interest = 'Add at least one interest';
+				if (!data.goal.length) e.goal = 'Add at least one career goal';
 			} else {
 				if (!data.title) e.title = 'Select your title';
 				if (!data.experience || Number(data.experience) < 0) e.experience = 'Enter valid years';
@@ -182,24 +195,20 @@
 				<p class="sub">{stepMeta[step].sub}</p>
 
 				<!-- Stepper -->
-				<ol class="stepper" aria-hidden="true">
+				<ol class="stepper">
 					{#each stepMeta as m, i}
-						<li
-							class:done={i < step}
-							class:active={i === step}
-							class:clickable={i <= step}
-							role="button"
-							tabindex={i <= step ? 0 : -1}
-							onclick={() => goTo(i)}
-							onkeydown={(e) => {
-								if (e.key === 'Enter' || e.key === ' ') {
-									e.preventDefault();
-									goTo(i);
-								}
-							}}
-						>
-							<span class="node">{i < step ? '✓' : i + 1}</span>
-							<span class="label">{m.title}</span>
+						<li class:done={i < step} class:active={i === step}>
+							<button
+								type="button"
+								class="step-btn"
+								class:clickable={i <= step}
+								disabled={i > step}
+								aria-current={i === step ? 'step' : undefined}
+								onclick={() => goTo(i)}
+							>
+								<span class="node">{i < step ? '✓' : i + 1}</span>
+								<span class="label">{m.title}</span>
+							</button>
 						</li>
 					{/each}
 				</ol>
@@ -237,9 +246,9 @@
 					<input type="hidden" name="password" value={data.password} />
 					<input type="hidden" name="confirmPassword" value={data.confirmPassword} />
 					<input type="hidden" name="role" value={data.role} />
-					<input type="hidden" name="educationLevel" value={data.educationLevel} />
-					<input type="hidden" name="interest" value={data.interest} />
-					<input type="hidden" name="goal" value={data.goal} />
+				<input type="hidden" name="educationLevel" value={data.educationLevel} />
+				<input type="hidden" name="interest" value={data.interest.join(', ')} />
+				<input type="hidden" name="goal" value={data.goal.join(', ')} />
 					<input type="hidden" name="title" value={data.title} />
 					<input type="hidden" name="experience" value={data.experience} />
 					<input type="hidden" name="area" value={data.area.join(', ')} />
@@ -355,12 +364,48 @@
 							</div>
 							<div class="field" class:invalid={errors.interest}>
 								<label for="interest">Interests</label>
-								<input id="interest" type="text" placeholder="e.g. AI, Design, Business" bind:value={data.interest} oninput={() => onInput('interest')} disabled={isSubmitting} />
+								<div class="tag-box">
+									{#each data.interest as a, i}
+										<span class="tag">
+											{a}
+											<button type="button" class="tag-x" onclick={() => removeInterest(i)} aria-label={'Remove ' + a} tabindex="-1">×</button>
+										</span>
+									{/each}
+									<input
+										id="interest"
+										type="text"
+										placeholder={data.interest.length ? 'Add another…' : 'e.g. AI, Design, Business'}
+										bind:value={interestInput}
+										onkeydown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addInterest(); } }}
+										disabled={isSubmitting}
+									/>
+								</div>
+								<button type="button" class="add-link" onclick={addInterest} disabled={isSubmitting || !interestInput.trim()}>
+									+ Add interest
+								</button>
 								{#if errors.interest}<p class="field-error">{errors.interest}</p>{/if}
 							</div>
 							<div class="field" class:invalid={errors.goal}>
 								<label for="goal">Career goal</label>
-								<input id="goal" type="text" placeholder="e.g. Become a data scientist" bind:value={data.goal} oninput={() => onInput('goal')} disabled={isSubmitting} />
+								<div class="tag-box">
+									{#each data.goal as a, i}
+										<span class="tag">
+											{a}
+											<button type="button" class="tag-x" onclick={() => removeGoal(i)} aria-label={'Remove ' + a} tabindex="-1">×</button>
+										</span>
+									{/each}
+									<input
+										id="goal"
+										type="text"
+										placeholder={data.goal.length ? 'Add another…' : 'e.g. Become a data scientist'}
+										bind:value={goalInput}
+										onkeydown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addGoal(); } }}
+										disabled={isSubmitting}
+									/>
+								</div>
+								<button type="button" class="add-link" onclick={addGoal} disabled={isSubmitting || !goalInput.trim()}>
+									+ Add goal
+								</button>
 								{#if errors.goal}<p class="field-error">{errors.goal}</p>{/if}
 							</div>
 						{:else}
@@ -768,6 +813,10 @@
 	.stepper li {
 		flex: 1;
 		display: flex;
+	}
+	.step-btn {
+		flex: 1;
+		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: 6px;
@@ -775,9 +824,22 @@
 		color: #9aa0b4;
 		font-weight: 600;
 		user-select: none;
+		background: none;
+		border: none;
+		padding: 0;
+		font-family: inherit;
+		cursor: default;
 	}
-	.stepper li.clickable {
+	.step-btn.clickable {
 		cursor: pointer;
+	}
+	.step-btn:disabled {
+		cursor: default;
+	}
+	.step-btn:focus-visible {
+		outline: 2px solid #4f46e5;
+		outline-offset: 3px;
+		border-radius: 8px;
 	}
 	.stepper .node {
 		width: 28px;
