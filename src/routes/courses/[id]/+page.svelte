@@ -23,6 +23,7 @@
 		let newThread = $state({ title: '', body: '' });
 		let threadMsg = $state('');
 		let replyText = $state({});
+		let replyMsg = $state({});
 
 		function onReviewSubmit() {
 			return async ({ result, update }) => {
@@ -52,11 +53,12 @@
 
 		function onReply(threadId) {
 			return async ({ result, update }) => {
+				replyMsg[threadId] = '';
 				if (result.type === 'success') {
 					replyText[threadId] = '';
 					location.reload();
 				} else if (result.type === 'failure') {
-					alert(result.data?.message || 'Could not post reply.');
+					replyMsg[threadId] = result.data?.message || 'Could not post reply.';
 				}
 				await update();
 			};
@@ -277,6 +279,9 @@
 									<input placeholder="Reply…" name="body" bind:value={replyText[t.id]} />
 									<button class="btn ghost sm" type="submit">Reply</button>
 								</form>
+								{#if replyMsg[t.id]}
+									<div class="reply-err">{replyMsg[t.id]}</div>
+								{/if}
 							{/if}
 						</li>
 					{/each}
@@ -440,6 +445,7 @@
 	.post.inst { background: #f3f1ff; border-radius: 8px; padding: 0.5rem 0.7rem; }
 	.inst-tag { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; color: #4338ca; background: #e0e0ff; padding: 1px 6px; border-radius: 999px; margin-left: 6px; }
 	.reply { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
+	.reply-err { color: #c0392b; font-size: 0.82rem; margin-top: 0.3rem; }
 	@media (max-width: 860px) {
 		.hero { grid-template-columns: 1fr; }
 		.hero-card { position: static; }
