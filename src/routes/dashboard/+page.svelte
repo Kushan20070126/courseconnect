@@ -172,30 +172,6 @@
 				<p>View and update your account details.</p>
 			</a>
 		</section>
-
-		<section class="block">
-			<div class="block-head">
-				<h2>My Learning</h2>
-				<a class="btn ghost sm" href="/my-courses">View all</a>
-			</div>
-			{#if enrolledCourses.length === 0}
-				<p class="muted">You haven't enrolled in any courses yet. Browse the catalog to get started.</p>
-			{:else}
-				<div class="mini-grid">
-					{#each enrolledCourses.slice(0, 6) as c (c.id)}
-						<a class="mini-card" href={`/courses/${c.id}/learn`}>
-							<div class="mini-thumb">
-								{#if c.thumbnailUrl}<img src={mediaUrl(c.thumbnailUrl)} alt={c.title ?? ''} />{:else}<div class="ph"></div>{/if}
-							</div>
-							<div class="mini-body">
-								<b>{c.title ?? 'Untitled'}</b>
-								<span class="muted">{c.instructorName ?? 'Instructor'} · {c.progressPercent ?? 0}%</span>
-							</div>
-						</a>
-					{/each}
-				</div>
-			{/if}
-		</section>
 	{/if}
 </div>
 
