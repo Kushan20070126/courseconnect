@@ -1,5 +1,6 @@
 <script>
 	import { enhance } from '$app/forms';
+	import { courseApi, mediaUrl } from '$lib/api.js';
 
 	let { data, form } = $props();
 
@@ -12,55 +13,54 @@
 	let reviews = $derived(data?.reviews ?? { summary: { count: 0, average: 0 }, items: [] });
 	let forum = $derived(data?.forum ?? []);
 
-	let newReview = $state({ rating: 5, title: '', body: '' });
-	let reviewMsg = $state('');
+	let totalLessons = $derived(
+		(course.sections ?? []).reduce((acc, s) => acc + (s.lessons?.length ?? 0), 0)
+	);
 
-	let newThread = $state({ title: '', body: '' });
-	let threadMsg = $state('');
-	let replyText = $state({});
+		let newReview = $state({ rating: 5, title: '', body: '' });
+		let reviewMsg = $state('');
 
-	async function submitReview() {
-		reviewMsg = '';
-		try {
-			const res = await fetch(`${COURSE_API || 'http://localhost:8082'}/req/courses/${course.id}/reviews`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-				body: JSON.stringify(newReview)
-			});
-			if (res.ok) { newReview = { rating: 5, title: '', body: '' }; reviewMsg = 'Thanks for your review!'; location.reload(); }
-			else reviewMsg = 'Could not submit review.';
-		} catch { reviewMsg = 'Could not submit review.'; }
-	}
+		let newThread = $state({ title: '', body: '' });
+		let threadMsg = $state('');
+		let replyText = $state({});
 
-	async function submitThread() {
-		threadMsg = '';
-		try {
-			const res = await fetch(`${COURSE_API || 'http://localhost:8082'}/req/courses/${course.id}/forum`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-				body: JSON.stringify(newThread)
-			});
-			if (res.ok) { newThread = { title: '', body: '' }; threadMsg = 'Posted!'; location.reload(); }
-			else threadMsg = 'Could not post.';
-		} catch { threadMsg = 'Could not post.'; }
-	}
+		function onReviewSubmit() {
+			return async ({ result, update }) => {
+				if (result.type === 'success') {
+					newReview = { rating: 5, title: '', body: '' };
+					reviewMsg = 'Thanks for your review!';
+					location.reload();
+				} else if (result.type === 'failure') {
+					reviewMsg = result.data?.message || 'Could not submit review.';
+				}
+				await update();
+			};
+		}
 
-	async function submitReply(threadId) {
-		try {
-			await fetch(`${COURSE_API || 'http://localhost:8082'}/req/forum/${threadId}/posts`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-				body: JSON.stringify({ body: replyText[threadId] || '' })
-			});
-			replyText[threadId] = '';
-			location.reload();
-		} catch {}
-	}
+		function onCreateThread() {
+			return async ({ result, update }) => {
+				if (result.type === 'success') {
+					newThread = { title: '', body: '' };
+					threadMsg = 'Posted!';
+					location.reload();
+				} else if (result.type === 'failure') {
+					threadMsg = result.data?.message || 'Could not post.';
+				}
+				await update();
+			};
+		}
 
-	function getToken() {
-		return document.cookie.replace(/(?:(?:^|.*;\s*)session_token\s*\=\s*((?:[^;](?!;))*[^;]?)?);.*$/, '$1');
-	}
-	const COURSE_API = process.env.COURSE_API || 'http://localhost:8082';
+		function onReply(threadId) {
+			return async ({ result, update }) => {
+				if (result.type === 'success') {
+					replyText[threadId] = '';
+					location.reload();
+				} else if (result.type === 'failure') {
+					alert(result.data?.message || 'Could not post reply.');
+				}
+				await update();
+			};
+		}
 
 	let isEnrolled = $derived(
 		enrollment != null &&
@@ -110,112 +110,108 @@
 <div class="page">
 	<a class="back" href="/courses">← Back to courses</a>
 
+	<header class="hero">
+		<div class="hero-main">
+			<div class="crumbs">{course.category || 'Course'}{course.level ? ` · ${course.level}` : ''}</div>
+			<h1>{course.title ?? 'Untitled course'}</h1>
+			<p class="summary">{course.summary ?? ''}</p>
+			<div class="meta">
+				{#if reviews.summary.average}<span class="stars">★ {reviews.summary.average}{reviews.summary.count ? ` (${reviews.summary.count})` : ''}</span>{/if}
+				{#if course.studentsCount}<span>{course.studentsCount} students</span>{/if}
+				{#if course.durationMinutes}<span>{Math.floor(course.durationMinutes / 60)}h {course.durationMinutes % 60}m</span>{/if}
+				<span>By {course.instructorName ?? 'Instructor'}</span>
+			</div>
+		</div>
+		<div class="hero-card">
+			{#if course.thumbnailUrl}
+				<img class="cover" src={mediaUrl(course.thumbnailUrl)} alt={course.title ?? 'Course'} />
+			{:else}
+				<div class="cover ph"></div>
+			{/if}
+			<div class="price-row">
+				{#if course.price}
+					<span class="price">{course.currency === 'lkr' ? 'LKR ' : '$'}{course.price}</span>
+				{:else}
+					<span class="price free">Free</span>
+				{/if}
+			</div>
+			{#if isEnrolled}
+				<a class="btn solid" href={`/courses/${course.id}/learn`}>Go to course</a>
+			{:else if isPending}
+				<p class="pending">Payment pending — finish checkout to activate.</p>
+			{:else if loggedIn}
+				<form method="POST" action="?/enroll" use:enhance={onEnrollSubmit}>
+					<button class="btn solid" type="submit" disabled={enrolling}>
+						{enrolling ? 'Enrolling…' : course.price ? 'Enroll & pay' : 'Enroll for free'}
+					</button>
+				</form>
+			{:else}
+				<a class="btn solid" href={`/signin?redirect=/courses/${course.id}`}>Sign in to enroll</a>
+			{/if}
+			{#if enrollError}<p class="err">{enrollError}</p>{/if}
+			<div class="includes">
+				<div class="inc"><span>🎬</span> On-demand video</div>
+				<div class="inc"><span>📚</span> Course materials</div>
+				<div class="inc"><span>♾️</span> Full lifetime access</div>
+			</div>
+		</div>
+	</header>
+
 	<div class="layout">
 		<main class="content">
-			<header class="hero">
-				<h1>{course.title ?? 'Untitled course'}</h1>
-				<p class="summary">{course.summary ?? ''}</p>
-				<div class="meta">
-					<span>{course.instructorName ?? 'Instructor'}</span>
-					<span class="dot">•</span>
-					<span>{course.level ?? 'All levels'}</span>
-					{#if course.category}
-						<span class="dot">•</span>
-						<span>{course.category}</span>
-					{/if}
-				</div>
-			</header>
-
 			{#if course.description}
 				<section class="block">
 					<h2>About this course</h2>
-					<p>{course.description}</p>
+					<p class="desc">{course.description}</p>
 				</section>
 			{/if}
 
 			{#if course.learn?.length}
 				<section class="block">
 					<h2>What you'll learn</h2>
-					<ul class="learn">
+					<div class="learn-grid">
 						{#each course.learn as item}
-							<li>{item}</li>
+							<div class="learn-item">✓ {item}</div>
 						{/each}
-					</ul>
+					</div>
 				</section>
 			{/if}
 
 			{#if course.sections?.length}
 				<section class="block">
-					<h2>Curriculum</h2>
-					{#each course.sections as section, i}
-						<div class="section">
-							<div class="section-title">{i + 1}. {section.title}</div>
-							{#if section.lessons?.length}
+					<div class="cur-head">
+						<h2>Curriculum</h2>
+						<span class="cur-meta">{course.sections.length} sections · {totalLessons} lessons</span>
+					</div>
+					<div class="cur-list">
+						{#each course.sections as section, i}
+							<details class="sec" open={i === 0}>
+								<summary>
+									<span class="sec-num">{i + 1}</span>
+									<span class="sec-title">{section.title}</span>
+									<span class="sec-count">{section.lessons?.length ?? 0} lessons</span>
+								</summary>
 								<ul class="lessons">
-									{#each section.lessons as lesson}
-										<li>{lesson.title}</li>
+									{#each section.lessons ?? [] as lesson}
+										<li>
+											<span class="play">▶</span>
+											<span class="ls-title">{lesson.title}</span>
+											{#if lesson.preview}<span class="tag preview">Preview</span>{/if}
+											{#if lesson.durationMinutes}<span class="dur">{lesson.durationMinutes} min</span>{/if}
+										</li>
 									{/each}
 								</ul>
-							{/if}
-						</div>
-					{/each}
+							</details>
+						{/each}
+					</div>
 				</section>
 			{/if}
-		</main>
-
-		<aside class="sidebar">
-			<div class="card">
-				{#if course.thumbnailUrl}
-					<img class="cover" src={course.thumbnailUrl} alt={course.title ?? 'Course'} />
-				{:else}
-					<div class="cover ph"></div>
-				{/if}
-
-				<div class="price-row">
-					{#if course.price}
-						<span class="price">{course.currency === 'lkr' ? 'LKR ' : '$'}{course.price}</span>
-					{:else}
-						<span class="price free">Free</span>
-					{/if}
-				</div>
-
-				<div class="stats">
-					{#if reviews.summary.average}<span>★ {reviews.summary.average}{reviews.summary.count ? ` (${reviews.summary.count})` : ''}</span>{/if}
-					{#if course.studentsCount}<span>{course.studentsCount} students</span>{/if}
-					{#if course.durationMinutes}<span>{Math.round(course.durationMinutes / 60)}h {course.durationMinutes % 60}m</span>{/if}
-				</div>
-
-				{#if isEnrolled}
-					<a class="btn solid" href={`/courses/${course.id}/learn`}>Go to course</a>
-				{:else if isPending}
-					<p class="pending">Payment pending — finish checkout to activate.</p>
-				{:else if loggedIn}
-					<form
-						method="POST"
-						action="?/enroll"
-						use:enhance={onEnrollSubmit}
-					>
-						<button class="btn solid" type="submit" disabled={enrolling}>
-							{enrolling ? 'Enrolling…' : course.price ? 'Enroll & pay' : 'Enroll for free'}
-						</button>
-					</form>
-				{:else}
-					<a class="btn solid" href={`/signin?redirect=/courses/${course.id}`}>Sign in to enroll</a>
-				{/if}
-
-				{#if enrollError}
-					<p class="err">{enrollError}</p>
-				{/if}
-
-				{#if !data && false}{/if}
-			</div>
-		</aside>
 
 		<!-- Reviews & ratings -->
 		<section class="engage">
 			<h2>Reviews</h2>
 			{#if loggedIn}
-				<form class="review-form" onsubmit={(e) => { e.preventDefault(); submitReview(); }}>
+				<form class="review-form" method="POST" action="?/submitReview" use:enhance={onReviewSubmit}>
 					<div class="stars">
 						{#each [5,4,3,2,1] as n}
 							<label>
@@ -224,8 +220,8 @@
 							</label>
 						{/each}
 					</div>
-					<input class="rf-title" placeholder="Title (optional)" bind:value={newReview.title} />
-					<textarea class="rf-body" rows="3" placeholder="Share your experience…" bind:value={newReview.body}></textarea>
+					<input class="rf-title" placeholder="Title (optional)" name="title" bind:value={newReview.title} />
+					<textarea class="rf-body" rows="3" placeholder="Share your experience…" name="body" bind:value={newReview.body}></textarea>
 					<button class="btn solid sm" type="submit">Submit review</button>
 					{#if reviewMsg}<span class="rf-msg">{reviewMsg}</span>{/if}
 				</form>
@@ -250,9 +246,9 @@
 		<section class="engage">
 			<h2>Discussion & Q&A</h2>
 			{#if loggedIn}
-				<form class="thread-form" onsubmit={(e) => { e.preventDefault(); submitThread(); }}>
-					<input class="tf-title" placeholder="Ask a question or start a topic" bind:value={newThread.title} />
-					<textarea class="tf-body" rows="2" placeholder="Details…" bind:value={newThread.body}></textarea>
+				<form class="thread-form" method="POST" action="?/createThread" use:enhance={onCreateThread}>
+					<input class="tf-title" placeholder="Ask a question or start a topic" name="title" bind:value={newThread.title} />
+					<textarea class="tf-body" rows="2" placeholder="Details…" name="body" bind:value={newThread.body}></textarea>
 					<button class="btn solid sm" type="submit">Post</button>
 					{#if threadMsg}<span class="rf-msg">{threadMsg}</span>{/if}
 				</form>
@@ -276,16 +272,18 @@
 								</ul>
 							{/if}
 							{#if loggedIn}
-								<div class="reply">
-									<input placeholder="Reply…" bind:value={replyText[t.id]} />
-									<button class="btn ghost sm" type="button" onclick={() => submitReply(t.id)}>Reply</button>
-								</div>
+								<form class="reply" method="POST" action="?/submitReply" use:enhance={onReply(t.id)}>
+									<input type="hidden" name="threadId" value={t.id} />
+									<input placeholder="Reply…" name="body" bind:value={replyText[t.id]} />
+									<button class="btn ghost sm" type="submit">Reply</button>
+								</form>
 							{/if}
 						</li>
 					{/each}
 				</ul>
 			{/if}
 		</section>
+		</main>
 	</div>
 </div>
 
@@ -305,125 +303,107 @@
 		font-size: 0.9rem;
 	}
 	.back:hover { color: #161a2b; }
-	.layout {
+
+	/* Hero */
+	.hero {
 		display: grid;
-		grid-template-columns: 1fr 320px;
+		grid-template-columns: 1fr 340px;
 		gap: 2rem;
 		align-items: start;
+		padding: 2rem;
+		background: #1d2030;
+		background: linear-gradient(135deg, #20243a, #2c2150);
+		border-radius: 18px;
+		color: #fff;
 	}
+	.hero-main { min-width: 0; }
+	.crumbs { font-size: 0.8rem; color: #c8cbe0; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.6rem; }
 	.hero h1 {
 		font-family: 'Space Grotesk', sans-serif;
-		font-size: 2rem;
-		margin: 0 0 0.5rem;
-	}
-	.summary {
-		color: #5b6072;
-		font-size: 1.02rem;
-		margin: 0 0 0.8rem;
-	}
-	.meta {
-		display: flex;
-		gap: 8px;
-		flex-wrap: wrap;
-		color: #6b7180;
-		font-size: 0.88rem;
-	}
-	.dot { color: #c4c8d4; }
-	.block {
-		margin-top: 2rem;
-	}
-	.block h2 {
-		font-family: 'Space Grotesk', sans-serif;
-		font-size: 1.25rem;
+		font-size: 2.1rem;
+		line-height: 1.15;
 		margin: 0 0 0.7rem;
 	}
-	.learn, .lessons {
-		margin: 0;
-		padding-left: 1.1rem;
-		color: #3a3f52;
-		line-height: 1.7;
-	}
-	.section {
-		padding: 0.7rem 0;
-		border-bottom: 1px solid #eef0f5;
-	}
-	.section-title {
-		font-weight: 600;
-	}
-	.lessons {
-		margin-top: 0.4rem;
-		color: #5b6072;
-	}
-	.sidebar {
+	.summary { color: #d7d9ea; font-size: 1.02rem; margin: 0 0 1rem; }
+	.meta { display: flex; gap: 10px; flex-wrap: wrap; color: #c8cbe0; font-size: 0.88rem; }
+	.meta .stars { color: #ffc107; font-weight: 600; }
+	.hero-card {
+		background: #fff;
+		border-radius: 14px;
+		padding: 0.9rem;
+		color: #161a2b;
+		box-shadow: 0 18px 40px rgba(0,0,0,0.25);
 		position: sticky;
 		top: 1.5rem;
 	}
-	.card {
-		background: #fff;
-		border: 1px solid #ecedf3;
-		border-radius: 16px;
-		padding: 1rem;
-		box-shadow: 0 8px 24px rgba(20, 26, 43, 0.06);
+	.cover { width: 100%; height: 180px; object-fit: cover; border-radius: 10px; background: #eef0f7; display: block; }
+	.cover.ph { background: linear-gradient(135deg, #e9ecf5, #f6f7fb); }
+	.price-row { margin: 0.9rem 0 0.4rem; }
+	.price { font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem; font-weight: 700; }
+	.price.free { color: #1f9d55; }
+	.includes { margin-top: 1rem; border-top: 1px solid #f0f1f6; padding-top: 0.8rem; display: flex; flex-direction: column; gap: 0.45rem; }
+	.inc { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #3a3f52; }
+
+	/* Layout */
+	.layout { margin-top: 2rem; }
+	.block { margin-top: 2rem; }
+	.block h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; margin: 0 0 0.9rem; }
+	.desc { color: #3a3f52; line-height: 1.7; white-space: pre-wrap; }
+
+	/* What you'll learn */
+	.learn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 1.4rem; }
+	.learn-item { display: flex; gap: 8px; color: #3a3f52; font-size: 0.92rem; line-height: 1.5; }
+	.learn-item::before { content: '✓'; color: #1f9d55; font-weight: 700; }
+
+	/* Curriculum */
+	.cur-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+	.cur-meta { color: #8a90a0; font-size: 0.85rem; }
+	.cur-list { margin-top: 1rem; border: 1px solid #ecedf3; border-radius: 14px; overflow: hidden; }
+	.sec { border-top: 1px solid #eef0f5; }
+	.sec:first-child { border-top: none; }
+	.sec > summary {
+		display: flex; align-items: center; gap: 10px;
+		padding: 0.9rem 1.1rem; cursor: pointer; list-style: none;
+		background: #fafbff; font-weight: 600;
 	}
-	.cover {
-		width: 100%;
-		height: 160px;
-		object-fit: cover;
-		border-radius: 10px;
-		background: #eef0f7;
+	.sec > summary::-webkit-details-marker { display: none; }
+	.sec-num {
+		width: 24px; height: 24px; border-radius: 6px; background: #161a2b; color: #fff;
+		display: inline-flex; align-items: center; justify-content: center; font-size: 0.78rem; flex-shrink: 0;
 	}
-	.cover.ph {
-		background: linear-gradient(135deg, #e9ecf5, #f6f7fb);
-	}
-	.price-row {
-		margin: 0.9rem 0 0.4rem;
-	}
-	.price {
-		font-family: 'Space Grotesk', sans-serif;
-		font-size: 1.5rem;
-		font-weight: 700;
-	}
-	.price.free {
-		color: #1f9d55;
-	}
-	.stats {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 10px;
-		color: #6b7180;
-		font-size: 0.85rem;
-		margin-bottom: 1rem;
-	}
+	.sec-title { flex: 1; }
+	.sec-count { font-size: 0.8rem; color: #8a90a0; font-weight: 500; }
+	.lessons { list-style: none; margin: 0; padding: 0; }
+	.lessons li { display: flex; align-items: center; gap: 10px; padding: 0.7rem 1.1rem 0.7rem 3rem; border-top: 1px solid #f4f5fa; font-size: 0.9rem; }
+	.lessons li .play { color: #4f46e5; font-size: 0.7rem; }
+	.ls-title { flex: 1; color: #3a3f52; }
+	.tag { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 999px; }
+	.tag.preview { background: #eef2ff; color: #4338ca; }
+	.dur { font-size: 0.78rem; color: #8a90a0; }
+
 	.btn {
 		display: block;
 		width: 100%;
+		box-sizing: border-box;
 		text-align: center;
 		padding: 0.8rem 1rem;
 		border-radius: 10px;
+		font-family: 'Inter', system-ui, sans-serif;
+		font-size: 0.95rem;
 		font-weight: 600;
+		line-height: 1.2;
 		border: none;
 		cursor: pointer;
 		text-decoration: none;
+		appearance: none;
+		-webkit-appearance: none;
 	}
-	.btn.solid {
-		background: #161a2b;
-		color: #fff;
-	}
-	.btn.solid:hover { background: #232a44; }
+	.btn.solid { background: #4f46e5; color: #fff; }
+	.btn.solid:hover { background: #4338ca; }
 	.btn:disabled { opacity: 0.6; cursor: default; }
-	.pending {
-		color: #a06a00;
-		background: #fff6e0;
-		padding: 0.7rem;
-		border-radius: 10px;
-		font-size: 0.88rem;
-		text-align: center;
-	}
-	.err {
-		color: #c0392b;
-		font-size: 0.85rem;
-		margin: 0.6rem 0 0;
-	}
+	.pending { color: #a06a00; background: #fff6e0; padding: 0.7rem; border-radius: 10px; font-size: 0.88rem; text-align: center; }
+	.err { color: #c0392b; font-size: 0.85rem; margin: 0.6rem 0 0; }
+
 	.engage {
 		margin-top: 2.4rem;
 		background: #fff;
@@ -432,11 +412,7 @@
 		padding: 1.4rem 1.5rem;
 		box-shadow: 0 8px 24px rgba(20, 26, 43, 0.05);
 	}
-	.engage h2 {
-		font-family: 'Space Grotesk', sans-serif;
-		font-size: 1.25rem;
-		margin: 0 0 1rem;
-	}
+	.engage h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; margin: 0 0 1rem; }
 	.muted { color: #8a90a0; font-size: 0.88rem; margin: 0.4rem 0; }
 	.review-form, .thread-form { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.2rem; }
 	.stars { display: flex; gap: 0.5rem; }
@@ -464,8 +440,9 @@
 	.post.inst { background: #f3f1ff; border-radius: 8px; padding: 0.5rem 0.7rem; }
 	.inst-tag { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; color: #4338ca; background: #e0e0ff; padding: 1px 6px; border-radius: 999px; margin-left: 6px; }
 	.reply { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
-	@media (max-width: 820px) {
-		.layout { grid-template-columns: 1fr; }
-		.sidebar { position: static; }
+	@media (max-width: 860px) {
+		.hero { grid-template-columns: 1fr; }
+		.hero-card { position: static; }
+		.learn-grid { grid-template-columns: 1fr; }
 	}
 </style>

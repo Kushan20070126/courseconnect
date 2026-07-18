@@ -1,7 +1,6 @@
 import { redirect, error, fail } from '@sveltejs/kit';
 
-const COURSE_API = process.env.COURSE_API || 'http://localhost:8082';
-const AUTH_API = process.env.AUTH_API || 'http://localhost:8081';
+import { AUTH_API, COURSE_API } from '$lib/server/config.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params, url, cookies }) {
@@ -145,6 +144,111 @@ export const actions = {
 		} catch (err) {
 			if (err && (err.status || err.location)) throw err;
 			console.error('Enroll error:', err);
+			return fail(500, { success: false, message: 'Could not connect to the course service' });
+		}
+	},
+
+	submitReview: async ({ params, request, cookies }) => {
+		const token = cookies.get('session_token');
+		if (!token) throw redirect(303, '/signin');
+
+		try {
+			const fd = await request.formData();
+			const payload = {
+				rating: Number(fd.get('rating') || 5),
+				title: String(fd.get('title') || ''),
+				body: String(fd.get('body') || '')
+			};
+
+			const res = await fetch(`${COURSE_API}/req/courses/${params.id}/reviews`, {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(payload)
+			});
+
+			if (!res.ok) {
+				const t = await res.text();
+				let msg = `Could not submit review (${res.status})`;
+				try { msg = JSON.parse(t).message || msg; } catch {}
+				return fail(res.status, { success: false, message: msg });
+			}
+
+			return { success: true };
+		} catch (err) {
+			if (err && (err.status || err.location)) throw err;
+			return fail(500, { success: false, message: 'Could not connect to the course service' });
+		}
+	},
+
+	createThread: async ({ params, request, cookies }) => {
+		const token = cookies.get('session_token');
+		if (!token) throw redirect(303, '/signin');
+
+		try {
+			const fd = await request.formData();
+			const payload = {
+				title: String(fd.get('title') || ''),
+				body: String(fd.get('body') || '')
+			};
+
+			const res = await fetch(`${COURSE_API}/req/courses/${params.id}/forum`, {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(payload)
+			});
+
+			if (!res.ok) {
+				const t = await res.text();
+				let msg = `Could not post (${res.status})`;
+				try { msg = JSON.parse(t).message || msg; } catch {}
+				return fail(res.status, { success: false, message: msg });
+			}
+
+			return { success: true };
+		} catch (err) {
+			if (err && (err.status || err.location)) throw err;
+			return fail(500, { success: false, message: 'Could not connect to the course service' });
+		}
+	},
+
+	submitReply: async ({ params, request, cookies }) => {
+		const token = cookies.get('session_token');
+		if (!token) throw redirect(303, '/signin');
+
+		try {
+			const fd = await request.formData();
+			const threadId = String(fd.get('threadId') || '');
+			const body = String(fd.get('body') || '');
+
+			if (!threadId) {
+				return fail(400, { success: false, message: 'Missing thread id' });
+			}
+
+			const res = await fetch(`${COURSE_API}/req/forum/${threadId}/posts`, {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ body })
+			});
+
+			if (!res.ok) {
+				const t = await res.text();
+				let msg = `Could not post reply (${res.status})`;
+				try { msg = JSON.parse(t).message || msg; } catch {}
+				return fail(res.status, { success: false, message: msg });
+			}
+
+			return { success: true };
+		} catch (err) {
+			if (err && (err.status || err.location)) throw err;
 			return fail(500, { success: false, message: 'Could not connect to the course service' });
 		}
 	}
