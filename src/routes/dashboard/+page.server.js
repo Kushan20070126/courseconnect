@@ -1,7 +1,6 @@
 import { redirect, error } from '@sveltejs/kit';
 
-const AUTH_API = process.env.AUTH_API || 'http://localhost:8081';
-const COURSE_API = process.env.COURSE_API || 'http://localhost:8082';
+import { AUTH_API, COURSE_API } from '$lib/server/config.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ cookies, url }) {
@@ -27,7 +26,16 @@ export async function load({ cookies, url }) {
 		const publishedCourses = Array.isArray(published) ? published : [];
 
 		if (!isLecturer) {
-			return { user: me, role: 'student', publishedCourses };
+			const myRes = await fetch(`${COURSE_API}/req/my-courses`, {
+				headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+			});
+			const enrolled = myRes.ok ? await myRes.json() : [];
+			return {
+				user: me,
+				role: 'student',
+				publishedCourses: [],
+				enrolledCourses: Array.isArray(enrolled) ? enrolled : []
+			};
 		}
 
 		// Lecturer: own courses + stats.

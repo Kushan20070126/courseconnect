@@ -1,6 +1,7 @@
 <script>
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import { mediaUrl } from '$lib/api.js';
 
 	let { data, form } = $props();
 
@@ -12,6 +13,7 @@
 	let myCourses = $derived(data?.myCourses ?? []);
 	let stats = $derived(data?.stats ?? {});
 	let published = $derived(data?.publishedCourses ?? []);
+	let enrolledCourses = $derived(data?.enrolledCourses ?? []);
 
 	let busy = $state(false);
 
@@ -147,7 +149,7 @@
 					{#each published.slice(0, 6) as c (c.id)}
 						<a class="mini-card" href={`/courses/${c.id}`}>
 							<div class="mini-thumb">
-								{#if c.thumbnailUrl}<img src={c.thumbnailUrl} alt={c.title ?? ''} />{:else}<div class="ph"></div>{/if}
+								{#if c.thumbnailUrl}<img src={mediaUrl(c.thumbnailUrl)} alt={c.title ?? ''} />{:else}<div class="ph"></div>{/if}
 							</div>
 							<div class="mini-body">
 								<b>{c.title ?? 'Untitled'}</b>
@@ -171,27 +173,29 @@
 			</a>
 		</section>
 
-		{#if published.length > 0}
-			<section class="block">
-				<div class="block-head">
-					<h2>Published Courses</h2>
-					<a class="btn ghost sm" href="/courses">View all</a>
-				</div>
+		<section class="block">
+			<div class="block-head">
+				<h2>My Learning</h2>
+				<a class="btn ghost sm" href="/my-courses">View all</a>
+			</div>
+			{#if enrolledCourses.length === 0}
+				<p class="muted">You haven't enrolled in any courses yet. Browse the catalog to get started.</p>
+			{:else}
 				<div class="mini-grid">
-					{#each published.slice(0, 6) as c (c.id)}
-						<a class="mini-card" href={`/courses/${c.id}`}>
+					{#each enrolledCourses.slice(0, 6) as c (c.id)}
+						<a class="mini-card" href={`/courses/${c.id}/learn`}>
 							<div class="mini-thumb">
-								{#if c.thumbnailUrl}<img src={c.thumbnailUrl} alt={c.title ?? ''} />{:else}<div class="ph"></div>{/if}
+								{#if c.thumbnailUrl}<img src={mediaUrl(c.thumbnailUrl)} alt={c.title ?? ''} />{:else}<div class="ph"></div>{/if}
 							</div>
 							<div class="mini-body">
 								<b>{c.title ?? 'Untitled'}</b>
-								<span class="muted">{c.instructorName ?? 'Instructor'}{c.price ? ` · ${fmtMoney(c.price, c.currency)}` : ' · Free'}</span>
+								<span class="muted">{c.instructorName ?? 'Instructor'} · {c.progressPercent ?? 0}%</span>
 							</div>
 						</a>
 					{/each}
 				</div>
-			</section>
-		{/if}
+			{/if}
+		</section>
 	{/if}
 </div>
 
