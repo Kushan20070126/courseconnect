@@ -51,14 +51,16 @@
 			};
 		}
 
-		function onReply(threadId) {
+		function replyEnhance() {
 			return async ({ result, update }) => {
+				const form = document.activeElement?.closest('form');
+				const threadId = form?.querySelector('input[name="threadId"]')?.value;
 				replyMsg[threadId] = '';
 				if (result.type === 'success') {
-					replyText[threadId] = '';
+					if (threadId) replyText[threadId] = '';
 					location.reload();
 				} else if (result.type === 'failure') {
-					replyMsg[threadId] = result.data?.message || 'Could not post reply.';
+					if (threadId) replyMsg[threadId] = result.data?.message || 'Could not post reply.';
 				}
 				await update();
 			};
@@ -274,7 +276,7 @@
 								</ul>
 							{/if}
 							{#if loggedIn}
-								<form class="reply" method="POST" action="?/submitReply" use:enhance={onReply(t.id)}>
+								<form class="reply" method="POST" action="?/submitReply" use:enhance={replyEnhance}>
 									<input type="hidden" name="threadId" value={t.id} />
 									<input placeholder="Reply…" name="body" bind:value={replyText[t.id]} />
 									<button class="btn ghost sm" type="submit">Reply</button>
