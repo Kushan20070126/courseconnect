@@ -73,9 +73,14 @@
 
 	function onComplete(lessonId) {
 		return async ({ result, update }) => {
-			if (result.type === 'success' && result.data?.progressPercent != null) {
-				progress = result.data.progressPercent;
-				if (result.data.completed) completed = true;
+			if (result.type === 'success') {
+				doneMap[lessonId] = true;
+				if (result.data?.progressPercent != null) {
+					progress = result.data.progressPercent;
+				}
+				if (result.data?.completed) {
+					completed = true;
+				}
 			}
 			await update();
 		};
