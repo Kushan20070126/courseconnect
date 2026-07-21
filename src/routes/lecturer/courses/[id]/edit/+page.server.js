@@ -1,6 +1,6 @@
 import { redirect, error, fail } from '@sveltejs/kit';
 
-const COURSE_API = process.env.COURSE_API || 'http://localhost:8082';
+import { AUTH_API, COURSE_API } from '$lib/server/config.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params, cookies }) {
@@ -8,7 +8,7 @@ export async function load({ params, cookies }) {
 	if (!token) throw redirect(303, '/signin');
 
 	try {
-		const meRes = await fetch(`${process.env.AUTH_API || 'http://localhost:8081'}/req/me`, {
+		const meRes = await fetch(`${AUTH_API}/req/me`, {
 			headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 		});
 		if (!meRes.ok) throw redirect(303, '/signin');

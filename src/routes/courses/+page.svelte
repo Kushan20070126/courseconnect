@@ -2,6 +2,7 @@
 	import { navigating } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { mediaUrl } from '$lib/api.js';
 
 	let { data } = $props();
 	let courses = $derived(data?.courses ?? []);
@@ -88,7 +89,7 @@
 				<a class="course-card" href={`/courses/${course.id}`}>
 					<div class="thumb">
 						{#if course.thumbnailUrl}
-							<img src={course.thumbnailUrl} alt={course.title ?? 'Course'} loading="lazy" />
+							<img src={mediaUrl(course.thumbnailUrl)} alt={course.title ?? 'Course'} loading="lazy" />
 						{:else}
 							<div class="thumb-ph"></div>
 						{/if}

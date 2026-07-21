@@ -1,4 +1,6 @@
 <script>
+	import { mediaUrl } from '$lib/api.js';
+
 	let { data } = $props();
 	let courses = $derived(data?.courses ?? []);
 
@@ -29,7 +31,7 @@
 					<a class="card" href={`/courses/${c.id}/learn`}>
 						<div class="thumb">
 							{#if c.thumbnailUrl}
-								<img src={c.thumbnailUrl} alt={c.title ?? ''} loading="lazy" />
+								<img src={mediaUrl(c.thumbnailUrl)} alt={c.title ?? ''} loading="lazy" />
 							{:else}
 								<div class="ph"></div>
 							{/if}
@@ -59,7 +61,7 @@
 					<a class="card" href={`/courses/${c.id}/learn`}>
 						<div class="thumb">
 							{#if c.thumbnailUrl}
-								<img src={c.thumbnailUrl} alt={c.title ?? ''} loading="lazy" />
+								<img src={mediaUrl(c.thumbnailUrl)} alt={c.title ?? ''} loading="lazy" />
 							{:else}
 								<div class="ph"></div>
 							{/if}

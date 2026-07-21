@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 
-const COURSE_API = process.env.COURSE_API || 'http://localhost:8082';
+import { COURSE_API } from '$lib/server/config.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ url }) {

@@ -1,6 +1,7 @@
 <script>
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import { mediaUrl } from '$lib/api.js';
 
 	let { data, form } = $props();
 	let courses = $derived(data?.courses ?? []);
@@ -48,7 +49,7 @@
 				<div class="card">
 					<div class="thumb">
 						{#if c.thumbnailUrl}
-							<img src={c.thumbnailUrl} alt={c.title ?? ''} loading="lazy" />
+							<img src={mediaUrl(c.thumbnailUrl)} alt={c.title ?? ''} loading="lazy" />
 						{:else}
 							<div class="ph"></div>
 						{/if}

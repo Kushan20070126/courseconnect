@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 
-const SPRING_BOOT_API = 'http://localhost:8081/req/login';
+import { AUTH_LOGIN_API as SPRING_BOOT_API } from '$lib/server/config.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ cookies, url }) {

@@ -1,4 +1,4 @@
-const BACKEND_URL = 'http://localhost:8081';
+import { AUTH_API as BACKEND_URL } from '$lib/server/config.js';
 
 /**
  * Loads the currently authenticated user (if any) so the shared navbar can

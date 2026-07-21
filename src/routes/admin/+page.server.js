@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 
-const ADMIN_API = 'http://localhost:8081/req/admin/login';
+import { ADMIN_LOGIN_API as ADMIN_API } from '$lib/server/config.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ cookies }) {

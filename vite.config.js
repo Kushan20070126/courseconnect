@@ -3,6 +3,16 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+	// Bind the dev/preview server to IPv4 loopback. On this machine `localhost`
+	// resolves to ::1 (IPv6) first; forcing 127.0.0.1 keeps the browser, Vite and
+	// the Spring Boot backends all on the same (IPv4) stack and avoids
+	// intermittent connection issues.
+	server: {
+		host: '127.0.0.1'
+	},
+	preview: {
+		host: '127.0.0.1'
+	},
 	plugins: [
 		sveltekit({
 			compilerOptions: {

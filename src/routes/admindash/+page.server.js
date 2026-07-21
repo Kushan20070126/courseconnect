@@ -1,6 +1,6 @@
 import { fail, redirect, error } from '@sveltejs/kit';
 
-const BACKEND_URL = 'http://localhost:8081';
+import { AUTH_API as BACKEND_URL } from '$lib/server/config.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ cookies, fetch }) {

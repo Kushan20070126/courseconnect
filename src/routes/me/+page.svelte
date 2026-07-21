@@ -820,30 +820,8 @@
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {
-		.sk-block,
-		.sk-thumb {
+		.sk-block {
 			animation: none;
-		}
-	}
-
-	/* Empty state (kept for no-data fallback) */
-	.empty {
-		text-align: center;
-		padding: 80px 0;
-		color: #5b6072;
-	}
-	.spinner-lg {
-		width: 36px;
-		height: 36px;
-		border-radius: 50%;
-		border: 3px solid #e7e8f2;
-		border-top-color: #4f46e5;
-		margin: 0 auto 16px;
-		animation: spin 0.8s linear infinite;
-	}
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
 		}
 	}
 

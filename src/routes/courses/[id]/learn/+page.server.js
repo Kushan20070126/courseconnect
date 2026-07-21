@@ -1,7 +1,6 @@
 import { redirect, error, fail } from '@sveltejs/kit';
 
-const COURSE_API = process.env.COURSE_API || 'http://localhost:8082';
-const AUTH_API = process.env.AUTH_API || 'http://localhost:8081';
+import { AUTH_API, COURSE_API } from '$lib/server/config.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params, cookies }) {

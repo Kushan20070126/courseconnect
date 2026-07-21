@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 
-const BACKEND_URL = 'http://localhost:8081';
+import { AUTH_API as BACKEND_URL } from '$lib/server/config.js';
 
 /** If already logged in, no need to reset. */
 export async function load({ cookies }) {
